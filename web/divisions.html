@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Divisions - Gestion Mots de Passe</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/index.html" class="navbar-brand"><img src="img/logo-province.svg" alt="Logo">Gestion MDP</a>
+        <div class="navbar-nav">
+            <a href="/index.html">Dashboard</a>
+            <a href="/serveurs.html">Serveurs</a>
+            <a href="/switches.html">Switches</a>
+            <a href="/systemes-internes.html">Systèmes Internes</a>
+            <a href="/systemes-externes.html">Systèmes Externes</a>
+            <a href="/divisions.html" class="active">Divisions</a>
+            <a href="/notifications.html">Notifications <span id="notifBadge" class="badge-notif" style="display:none;">0</span></a>
+            <a href="/audit.html">Audit</a>
+        </div>
+        <div class="navbar-right">
+            <span id="nomUtilisateur"></span>
+            <button class="theme-toggle" onclick="toggleTheme()" title="Mode sombre"><span id="themeIcon">🌙</span></button>
+            <button class="btn-logout" onclick="deconnecter()">Déconnexion</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Gestion des Divisions</h1>
+        </div>
+
+        <div id="alertSucces" class="alert alert-success" style="display:none;"></div>
+        <div id="alertErreur" class="alert alert-danger" style="display:none;"></div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+            <!-- Divisions Internes -->
+            <div class="card">
+                <div class="card-header">
+                    <span>Divisions Internes</span>
+                </div>
+                <div class="card-body">
+                    <div style="display:flex;gap:8px;margin-bottom:16px;">
+                        <input id="inputInterne" class="form-control" placeholder="Nom de la division interne" style="flex:1;">
+                        <button class="btn btn-primary" onclick="ajouterInterne()">Ajouter</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead><tr><th>ID</th><th>Nom</th><th>Actions</th></tr></thead>
+                            <tbody id="tableInternes"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Divisions Externes -->
+            <div class="card">
+                <div class="card-header">
+                    <span>Divisions Externes</span>
+                </div>
+                <div class="card-body">
+                    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+                        <input id="inputExterne" class="form-control" placeholder="Nom de la division externe" style="flex:1;">
+                        <input id="inputType" class="form-control" placeholder="Type (ex: AAL, Caïdat...)" style="width:180px;">
+                        <button class="btn btn-primary" onclick="ajouterExterne()">Ajouter</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead><tr><th>ID</th><th>Nom</th><th>Type</th><th>Actions</th></tr></thead>
+                            <tbody id="tableExternes"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+    async function chargerInternes() {
+        try {
+            const res = await API.getDivisionsInternes();
+            const tbody = document.getElementById('tableInternes');
+            tbody.innerHTML = '';
+            res.data.forEach(d => {
+                tbody.innerHTML += '<tr>' +
+                    '<td>' + d.id + '</td>' +
+                    '<td>' + d.nom + '</td>' +
+                    '<td class="action-btns">' +
+                        '<button class="btn btn-sm btn-warning" onclick="ouvrirModifInterne(' + d.id + ')">✏️ Modifier</button>' +
+                        '<button class="btn btn-sm btn-danger" onclick="supprimerInterne(' + d.id + ')">🗑️ Supprimer</button>' +
+                    '</td></tr>';
+            });
+            if (res.data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--gray);">Aucune division interne</td></tr>';
+            }
+        } catch (e) { afficherErreur('Erreur chargement divisions internes'); }
+    }
+
+    async function chargerExternes() {
+        try {
+            const res = await API.getDivisionsExternes();
+            const tbody = document.getElementById('tableExternes');
+            tbody.innerHTML = '';
+            res.data.forEach(d => {
+                tbody.innerHTML += '<tr>' +
+                    '<td>' + d.id + '</td>' +
+                    '<td>' + d.nom + '</td>' +
+                    '<td>' + d.type + '</td>' +
+                    '<td class="action-btns">' +
+                        '<button class="btn btn-sm btn-warning" onclick="ouvrirModifExterne(' + d.id + ')">✏️ Modifier</button>' +
+                        '<button class="btn btn-sm btn-danger" onclick="supprimerExterne(' + d.id + ')">🗑️ Supprimer</button>' +
+                    '</td></tr>';
+            });
+            if (res.data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--gray);">Aucune division externe</td></tr>';
+            }
+        } catch (e) { afficherErreur('Erreur chargement divisions externes'); }
+    }
+
+    async function ajouterInterne() {
+        const nom = document.getElementById('inputInterne').value.trim();
+        if (!nom) { afficherErreur('Veuillez saisir un nom'); return; }
+        try {
+            await API.ajouterDivisionInterne({ nom });
+            document.getElementById('inputInterne').value = '';
+            afficherSucces('Division interne ajoutée');
+            chargerInternes();
+        } catch (e) { afficherErreur(e.message); }
+    }
+
+    async function ajouterExterne() {
+        const nom = document.getElementById('inputExterne').value.trim();
+        const type = document.getElementById('inputType').value.trim();
+        if (!nom) { afficherErreur('Veuillez saisir un nom'); return; }
+        if (!type) { afficherErreur('Veuillez saisir un type'); return; }
+        try {
+            await API.ajouterDivisionExterne({ nom, type });
+            document.getElementById('inputExterne').value = '';
+            afficherSucces('Division externe ajoutée');
+            chargerExternes();
+        } catch (e) { afficherErreur(e.message); }
+    }
+
+    function ouvrirModifInterne(id) {
+        const nom = prompt('Nouveau nom pour la division interne :');
+        if (!nom || !nom.trim()) return;
+        API.modifierDivisionInterne(id, { nom: nom.trim() }).then(() => {
+            afficherSucces('Division interne modifiée');
+            chargerInternes();
+        }).catch(e => afficherErreur(e.message));
+    }
+
+    function ouvrirModifExterne(id) {
+        const nom = prompt('Nouveau nom pour la division externe :');
+        if (!nom || !nom.trim()) return;
+        const type = prompt('Nouveau type (AAL, Caïdat...) :');
+        if (!type || !type.trim()) return;
+        API.modifierDivisionExterne(id, { nom: nom.trim(), type: type.trim() }).then(() => {
+            afficherSucces('Division externe modifiée');
+            chargerExternes();
+        }).catch(e => afficherErreur(e.message));
+    }
+
+    async function supprimerInterne(id) {
+        if (!confirm('Supprimer cette division interne ?')) return;
+        try { await API.supprimerDivisionInterne(id); afficherSucces('Division interne supprimée'); chargerInternes(); }
+        catch (e) { afficherErreur(e.message); }
+    }
+
+    async function supprimerExterne(id) {
+        if (!confirm('Supprimer cette division externe ?')) return;
+        try { await API.supprimerDivisionExterne(id); afficherSucces('Division externe supprimée'); chargerExternes(); }
+        catch (e) { afficherErreur(e.message); }
+    }
+
+    function deconnecter() { fetch('/api/logout', {method:'POST',credentials:'include'}).then(()=>window.location.href='/login.html'); }
+
+    document.addEventListener('DOMContentLoaded', () => { chargerInternes(); chargerExternes(); });
+    </script>
+</body>
+</html>

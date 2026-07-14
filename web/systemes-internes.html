@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Systèmes Internes - Gestion Mots de Passe</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/index.html" class="navbar-brand"><img src="img/logo-province.svg" alt="Logo">Gestion MDP</a>
+        <div class="navbar-nav">
+            <a href="/index.html">Dashboard</a>
+            <a href="/serveurs.html">Serveurs</a>
+            <a href="/switches.html">Switches</a>
+            <a href="/systemes-internes.html" class="active">Systèmes Internes</a>
+            <a href="/systemes-externes.html">Systèmes Externes</a>
+            <a href="/divisions.html">Divisions</a>
+            <a href="/notifications.html">Notifications <span id="notifBadge" class="badge-notif" style="display:none;">0</span></a>
+            <a href="/audit.html">Audit</a>
+        </div>
+        <div class="navbar-right">
+            <span id="nomUtilisateur"></span>
+            <button class="theme-toggle" onclick="toggleTheme()" title="Mode sombre"><span id="themeIcon">🌙</span></button>
+            <button class="btn-logout" onclick="deconnecter()">Déconnexion</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Systèmes d'Information Internes</h1>
+            <div>
+                <button class="btn btn-secondary" onclick="API.exporterSystemesInternesCSV()">CSV</button>
+                <button class="btn btn-secondary" onclick="API.exporterSystemesInternesPDF()">PDF</button>
+                <button class="btn btn-primary" onclick="ouvrirModal('modalAjout')">+ Nouveau système</button>
+            </div>
+        </div>
+
+        <div id="alertSucces" class="alert alert-success" style="display:none;"></div>
+        <div id="alertErreur" class="alert alert-danger" style="display:none;"></div>
+
+        <div class="card">
+            <div class="card-header">Liste des systèmes internes</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>Nom</th><th>URL</th><th>Division</th><th>Login</th><th>Actions</th></tr></thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalAjout" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header"><h2>Nouveau système interne</h2><button class="modal-close" onclick="fermerModal('modalAjout')">&times;</button></div>
+            <div class="modal-body">
+                <div class="form-group"><label>Nom</label><input id="ajoutNom" class="form-control"></div>
+                <div class="form-group"><label>URL</label><input id="ajoutUrl" class="form-control"></div>
+                <div class="form-group"><label>Division</label>
+                    <div style="display:flex;gap:4px;">
+                        <select id="ajoutDivision" class="form-control" style="flex:1;"></select>
+                        <input id="ajoutDivisionInput" class="form-control" placeholder="Nouvelle division" style="width:160px;">
+                        <button class="btn btn-sm btn-primary" onclick="ajouterDivisionInterneDepuis('ajoutDivision')">+</button>
+                    </div>
+                </div>
+                <div class="form-group"><label>Login</label><input id="ajoutLogin" class="form-control"></div>
+                <div class="form-group"><label>Mot de passe</label><input id="ajoutMdp" type="password" class="form-control" required></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="fermerModal('modalAjout')">Annuler</button>
+                <button class="btn btn-primary" onclick="ajouter()">Ajouter</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalModif" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header"><h2>Modifier</h2><button class="modal-close" onclick="fermerModal('modalModif')">&times;</button></div>
+            <div class="modal-body">
+                <input type="hidden" id="modifId">
+                <div class="form-group"><label>Nom</label><input id="modifNom" class="form-control"></div>
+                <div class="form-group"><label>URL</label><input id="modifUrl" class="form-control"></div>
+                <div class="form-group"><label>Division</label>
+                    <div style="display:flex;gap:4px;">
+                        <select id="modifDivision" class="form-control" style="flex:1;"></select>
+                        <input id="modifDivisionInput" class="form-control" placeholder="Nouvelle division" style="width:160px;">
+                        <button class="btn btn-sm btn-primary" onclick="ajouterDivisionInterneDepuis('modifDivision')">+</button>
+                    </div>
+                </div>
+                <div class="form-group"><label>Login</label><input id="modifLogin" class="form-control"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="fermerModal('modalModif')">Annuler</button>
+                <button class="btn btn-primary" onclick="modifier()">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalMdp" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header"><h2>Changer mot de passe</h2><button class="modal-close" onclick="fermerModal('modalMdp')">&times;</button></div>
+            <div class="modal-body">
+                <input type="hidden" id="mdpId">
+                <div class="form-group"><label>Nouveau mot de passe</label><input id="mdpValue" type="password" class="form-control"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="fermerModal('modalMdp')">Annuler</button>
+                <button class="btn btn-primary" onclick="changerMdp()">Changer</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+    let divisions = [];
+
+    async function chargerDivisions(selectId, selectedId) {
+        try {
+            const res = await API.getDivisionsInternes();
+            divisions = res.data;
+            const sel = document.getElementById(selectId);
+            sel.innerHTML = '';
+            divisions.forEach(d => {
+                sel.innerHTML += '<option value="' + d.id + '"' + (d.id == selectedId ? ' selected' : '') + '>' + d.nom + '</option>';
+            });
+        } catch (e) { afficherErreur('Erreur chargement divisions'); }
+    }
+
+    async function chargerListe() {
+        try {
+            const res = await API.getSystemesInternes();
+            await chargerDivisions('ajoutDivision');
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            res.data.forEach(s => {
+                const divName = divisions.find(d => d.id == s.idDivision)?.nom || s.idDivision;
+                tbody.innerHTML += '<tr>' +
+                    '<td>' + s.nom + '</td>' +
+                    '<td>' + (s.url||'') + '</td>' +
+                    '<td>' + divName + '</td>' +
+                    '<td>' + (s.login||'') + '</td>' +
+                    '<td class="action-btns">' +
+                        (window.utilisateurRole === 'Administrateur' ? '<button class="btn btn-sm btn-info" onclick="consulterSecret(' + s.id + ')">🔑 Voir</button>' : '') +
+                        '<button class="btn btn-sm btn-warning" onclick="ouvrirModif(' + s.id + ')">✏️ Modifier</button>' +
+                        '<button class="btn btn-sm btn-secondary" onclick="ouvrirMdp(' + s.id + ')">🔒 Changer MDP</button>' +
+                        '<button class="btn btn-sm btn-danger" onclick="supprimer(' + s.id + ')">🗑️ Supprimer</button>' +
+                    '</td></tr>';
+            });
+        } catch (e) { afficherErreur('Erreur'); }
+    }
+
+    async function ajouter() {
+        try {
+            await API.ajouterSystemeInterne({
+                nom: document.getElementById('ajoutNom').value,
+                url: document.getElementById('ajoutUrl').value,
+                idDivision: document.getElementById('ajoutDivision').value,
+                login: document.getElementById('ajoutLogin').value,
+                motDePasse: document.getElementById('ajoutMdp').value
+            });
+            fermerModal('modalAjout');
+            afficherSucces('Système interne ajouté');
+            chargerListe();
+        } catch (e) { afficherErreur(e.message); }
+    }
+
+    async function modifier() {
+        const id = document.getElementById('modifId').value;
+        try {
+            await API.modifierSystemeInterne(id, {
+                nom: document.getElementById('modifNom').value,
+                url: document.getElementById('modifUrl').value,
+                idDivision: document.getElementById('modifDivision').value,
+                login: document.getElementById('modifLogin').value
+            });
+            fermerModal('modalModif');
+            afficherSucces('Modifié');
+            chargerListe();
+        } catch (e) { afficherErreur(e.message); }
+    }
+
+    async function consulterSecret(id) {
+        try { const res = await API.consulterSecretSystemeInterne(id); alert('Mot de passe: ' + (res.data.motDePasse||'(aucun)')); }
+        catch (e) { afficherErreur(e.message); }
+    }
+
+    async function changerMdp() {
+        const id = document.getElementById('mdpId').value;
+        const mdp = document.getElementById('mdpValue').value;
+        if (mdp.length < 8) { afficherErreur('Minimum 8 caractères'); return; }
+        try { await API.modifierMotDePasseSystemeInterne(id, { motDePasse: mdp }); fermerModal('modalMdp'); afficherSucces('Mot de passe modifié'); }
+        catch (e) { afficherErreur(e.message); }
+    }
+
+    async function supprimer(id) {
+        if (!confirm('Supprimer ?')) return;
+        try { await API.supprimerSystemeInterne(id); afficherSucces('Supprimé'); chargerListe(); }
+        catch (e) { afficherErreur(e.message); }
+    }
+
+    async function ouvrirModif(id) {
+        await chargerDivisions('modifDivision');
+        document.getElementById('modifId').value = id;
+        const row = event.target.closest('tr');
+        const cells = row.querySelectorAll('td');
+        document.getElementById('modifNom').value = cells[0].textContent;
+        document.getElementById('modifUrl').value = cells[1].textContent;
+        const div = divisions.find(d => d.nom === cells[2].textContent);
+        if (div) document.getElementById('modifDivision').value = div.id;
+        document.getElementById('modifLogin').value = cells[3].textContent;
+        ouvrirModal('modalModif');
+    }
+
+    function ouvrirMdp(id) { document.getElementById('mdpId').value = id; document.getElementById('mdpValue').value = ''; ouvrirModal('modalMdp'); }
+
+    async function ajouterDivisionInterneDepuis(selectId) {
+        const input = document.getElementById(selectId + 'Input');
+        const nom = input.value.trim();
+        if (!nom) { afficherErreur('Saisissez un nom de division'); return; }
+        try {
+            await API.ajouterDivisionInterne({ nom });
+            input.value = '';
+            afficherSucces('Division "' + nom + '" ajoutée');
+            await chargerDivisions(selectId);
+        } catch (e) { afficherErreur(e.message); }
+    }
+
+    function deconnecter() { fetch('/api/logout',{method:'POST',credentials:'include'}).then(()=>window.location.href='/login.html'); }
+
+    document.addEventListener('DOMContentLoaded', () => { chargerDivisions('ajoutDivision'); chargerListe(); });
+    </script>
+</body>
+</html>

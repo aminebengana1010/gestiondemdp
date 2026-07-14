@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serveurs - Gestion Mots de Passe</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/index.html" class="navbar-brand"><img src="img/logo-province.svg" alt="Logo">Gestion MDP</a>
+        <div class="navbar-nav">
+            <a href="/index.html">Dashboard</a>
+            <a href="/serveurs.html" class="active">Serveurs</a>
+            <a href="/switches.html">Switches</a>
+            <a href="/systemes-internes.html">Systèmes Internes</a>
+            <a href="/systemes-externes.html">Systèmes Externes</a>
+            <a href="/divisions.html">Divisions</a>
+            <a href="/notifications.html">Notifications <span id="notifBadge" class="badge-notif" style="display:none;">0</span></a>
+            <a href="/audit.html">Audit</a>
+        </div>
+        <div class="navbar-right">
+            <span id="nomUtilisateur"></span>
+            <button class="theme-toggle" onclick="toggleTheme()" title="Mode sombre"><span id="themeIcon">🌙</span></button>
+            <button class="btn-logout" onclick="deconnecter()">Déconnexion</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Gestion des Serveurs</h1>
+            <div>
+                <button class="btn btn-secondary" onclick="API.exporterServeursCSV()">CSV</button>
+                <button class="btn btn-secondary" onclick="API.exporterServeursPDF()">PDF</button>
+                <button class="btn btn-primary" onclick="ouvrirModal('modalAjout')">+ Nouveau serveur</button>
+            </div>
+        </div>
+
+        <div id="alertSucces" class="alert alert-success" style="display:none;"></div>
+        <div id="alertErreur" class="alert alert-danger" style="display:none;"></div>
+
+        <div class="card">
+            <div class="card-header">Liste des serveurs</div>
+            <div class="card-body">
+                <div class="table-responsive" id="tableContainer">
+                    <table>
+                        <thead><tr><th>Nom</th><th>Adresse IP</th><th>Login</th><th>Dernier changement</th><th>Actions</th></tr></thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ajout -->
+    <div id="modalAjout" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Nouveau serveur</h2>
+                <button class="modal-close" onclick="fermerModal('modalAjout')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group"><label>Nom du serveur</label><input id="ajoutNom" class="form-control" required></div>
+                <div class="form-group"><label>Adresse IP</label><input id="ajoutIP" class="form-control"></div>
+                <div class="form-group"><label>Login</label><input id="ajoutLogin" class="form-control"></div>
+                <div class="form-group"><label>Mot de passe</label><input id="ajoutMdp" type="password" class="form-control" required></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="fermerModal('modalAjout')">Annuler</button>
+                <button class="btn btn-primary" onclick="ajouter()">Ajouter</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Modifier -->
+    <div id="modalModif" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Modifier le serveur</h2>
+                <button class="modal-close" onclick="fermerModal('modalModif')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="modifId">
+                <div class="form-group"><label>Nom</label><input id="modifNom" class="form-control"></div>
+                <div class="form-group"><label>Adresse IP</label><input id="modifIP" class="form-control"></div>
+                <div class="form-group"><label>Login</label><input id="modifLogin" class="form-control"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="fermerModal('modalModif')">Annuler</button>
+                <button class="btn btn-primary" onclick="modifier()">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Mot de passe -->
+    <div id="modalMdp" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Modifier le mot de passe</h2>
+                <button class="modal-close" onclick="fermerModal('modalMdp')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="mdpId">
+                <div class="form-group"><label>Nouveau mot de passe (min. 8 caractères)</label><input id="mdpValue" type="password" class="form-control" required></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="fermerModal('modalMdp')">Annuler</button>
+                <button class="btn btn-primary" onclick="changerMdp()">Changer</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+    async function chargerListe() {
+        try {
+            const res = await API.getServeurs();
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            res.data.forEach(s => {
+                tbody.innerHTML += '<tr>' +
+                    '<td>' + s.nom + '</td>' +
+                    '<td>' + (s.adresseIP||'') + '</td>' +
+                    '<td>' + (s.login||'') + '</td>' +
+                    '<td>' + (s.dateDernierChangement ? new Date(s.dateDernierChangement).toLocaleDateString('fr-FR') : '') + '</td>' +
+                    '<td class="action-btns">' +
+                        (window.utilisateurRole === 'Administrateur' ? '<button class="btn btn-sm btn-info" onclick="consulterSecret(' + s.id + ')">🔑 Voir</button>' : '') +
+                        '<button class="btn btn-sm btn-warning" onclick="ouvrirModif(' + s.id + ',\'' + s.nom + '\',\'' + (s.adresseIP||'') + '\',\'' + (s.login||'') + '\')">✏️ Modifier</button>' +
+                        '<button class="btn btn-sm btn-secondary" onclick="ouvrirMdp(' + s.id + ')">🔒 Changer MDP</button>' +
+                        '<button class="btn btn-sm btn-danger" onclick="supprimer(' + s.id + ')">🗑️ Supprimer</button>' +
+                    '</td></tr>';
+            });
+        } catch (e) { afficherErreur('Erreur chargement'); }
+    }
+
+    async function ajouter() {
+        const data = {
+            nom: document.getElementById('ajoutNom').value,
+            adresseIP: document.getElementById('ajoutIP').value,
+            login: document.getElementById('ajoutLogin').value,
+            motDePasse: document.getElementById('ajoutMdp').value
+        };
+        try {
+            await API.ajouterServeur(data);
+            fermerModal('modalAjout');
+            afficherSucces('Serveur ajouté');
+            ['ajoutNom','ajoutIP','ajoutLogin','ajoutMdp'].forEach(id => document.getElementById(id).value = '');
+            chargerListe();
+        } catch (e) { afficherErreur(e.message); }
+    }
+
+    function ouvrirModif(id, nom, ip, login) {
+        document.getElementById('modifId').value = id;
+        document.getElementById('modifNom').value = nom;
+        document.getElementById('modifIP').value = ip;
+        document.getElementById('modifLogin').value = login;
+        ouvrirModal('modalModif');
+    }
+
+    async function modifier() {
+        const id = document.getElementById('modifId').value;
+        try {
+            await API.modifierServeur(id, {
+                nom: document.getElementById('modifNom').value,
+                adresseIP: document.getElementById('modifIP').value,
+                login: document.getElementById('modifLogin').value
+            });
+            fermerModal('modalModif');
+            afficherSucces('Serveur modifié');
+            chargerListe();
+        } catch (e) { afficherErreur(e.message); }
+    }
+
+    function ouvrirMdp(id) { document.getElementById('mdpId').value = id; document.getElementById('mdpValue').value = ''; ouvrirModal('modalMdp'); }
+
+    async function changerMdp() {
+        const id = document.getElementById('mdpId').value;
+        const mdp = document.getElementById('mdpValue').value;
+        if (mdp.length < 8) { afficherErreur('Minimum 8 caractères'); return; }
+        try {
+            await API.modifierMotDePasseServeur(id, { motDePasse: mdp });
+            fermerModal('modalMdp');
+            afficherSucces('Mot de passe modifié');
+            chargerListe();
+        } catch (e) { afficherErreur(e.message); }
+    }
+
+    async function consulterSecret(id) {
+        try {
+            const res = await API.consulterSecretServeur(id);
+            alert('Mot de passe: ' + (res.data.motDePasse || '(aucun)'));
+        } catch (e) { afficherErreur(e.message); }
+    }
+
+    async function supprimer(id) {
+        if (!confirm('Supprimer ce serveur ?')) return;
+        try {
+            await API.supprimerServeur(id);
+            afficherSucces('Serveur supprimé');
+            chargerListe();
+        } catch (e) { afficherErreur(e.message); }
+    }
+
+    function deconnecter() { fetch('/api/logout', {method:'POST',credentials:'include'}).then(()=>window.location.href='/login.html'); }
+
+    document.addEventListener('DOMContentLoaded', chargerListe);
+    </script>
+</body>
+</html>

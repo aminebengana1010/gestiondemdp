@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications - Gestion Mots de Passe</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/index.html" class="navbar-brand"><img src="img/logo-province.svg" alt="Logo">Gestion MDP</a>
+        <div class="navbar-nav">
+            <a href="/index.html">Dashboard</a>
+            <a href="/serveurs.html">Serveurs</a>
+            <a href="/switches.html">Switches</a>
+            <a href="/systemes-internes.html">Systèmes Internes</a>
+            <a href="/systemes-externes.html">Systèmes Externes</a>
+            <a href="/divisions.html">Divisions</a>
+            <a href="/notifications.html" class="active">Notifications <span id="notifBadge" class="badge-notif" style="display:none;">0</span></a>
+            <a href="/audit.html">Audit</a>
+        </div>
+        <div class="navbar-right">
+            <span id="nomUtilisateur"></span>
+            <button class="theme-toggle" onclick="toggleTheme()" title="Mode sombre"><span id="themeIcon">🌙</span></button>
+            <button class="btn-logout" onclick="deconnecter()">Déconnexion</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Notifications</h1>
+        </div>
+
+        <div id="alertErreur" class="alert alert-danger" style="display:none;"></div>
+
+        <div class="card">
+            <div class="card-header">
+                <span>Historique des notifications</span>
+                <button class="btn btn-sm btn-secondary" onclick="chargerListe()" style="float:right;">Actualiser</button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>Date</th><th>Message</th><th>Type</th><th>Statut</th><th>Action</th></tr></thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+    async function chargerListe() {
+        try {
+            const res = await API.getNotifications();
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            res.data.forEach(n => {
+                tbody.innerHTML += '<tr>' +
+                    '<td>' + (n.date ? new Date(n.date).toLocaleString('fr-FR') : '') + '</td>' +
+                    '<td>' + n.message + '</td>' +
+                    '<td><span class="badge" style="background:'+(n.type==='SECURITE'?'var(--danger)':'var(--secondary)')+';color:white;padding:2px 8px;border-radius:10px;font-size:12px;">' + n.type + '</span></td>' +
+                    '<td>' + (n.lue ? 'Lue' : '<strong>Non lue</strong>') + '</td>' +
+                    '<td>' + (!n.lue ? '<button class="btn btn-sm btn-primary" onclick="marquerLue('+n.id+')">Marquer lue</button>' : '') + '</td>' +
+                '</tr>';
+            });
+            if (res.data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--gray);">Aucune notification</td></tr>';
+            }
+        } catch (e) { afficherErreur('Erreur chargement'); }
+    }
+
+    async function marquerLue(id) {
+        try { await API.marquerNotificationLue(id); chargerListe(); }
+        catch (e) { afficherErreur(e.message); }
+    }
+
+    function deconnecter() { fetch('/api/logout',{method:'POST',credentials:'include'}).then(()=>window.location.href='/login.html'); }
+
+    document.addEventListener('DOMContentLoaded', chargerListe);
+    </script>
+</body>
+</html>

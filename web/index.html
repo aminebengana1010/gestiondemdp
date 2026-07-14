@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de bord - Gestion Mots de Passe</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <a href="/index.html" class="navbar-brand"><img src="img/logo-province.svg" alt="Logo">Gestion MDP</a>
+        <div class="navbar-nav">
+            <a href="/index.html" class="active">Dashboard</a>
+            <a href="/serveurs.html">Serveurs</a>
+            <a href="/switches.html">Switches</a>
+            <a href="/systemes-internes.html">Systèmes Internes</a>
+            <a href="/systemes-externes.html">Systèmes Externes</a>
+            <a href="/divisions.html">Divisions</a>
+            <a href="/notifications.html">Notifications <span id="notifBadge" class="badge-notif" style="display:none;">0</span></a>
+            <a href="/audit.html">Audit</a>
+        </div>
+        <div class="navbar-right">
+            <span id="nomUtilisateur"></span>
+            <button class="theme-toggle" onclick="toggleTheme()" title="Mode sombre"><span id="themeIcon">🌙</span></button>
+            <button class="btn-logout" onclick="deconnecter()">Déconnexion</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Tableau de bord</h1>
+        </div>
+
+        <div id="alertErreur" class="alert alert-danger" style="display:none;"></div>
+
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="number" id="statServeurs">-</div>
+                <div class="label">Serveurs</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="statSwitches">-</div>
+                <div class="label">Switches</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="statSystemesInternes">-</div>
+                <div class="label">Systèmes Internes</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="statSystemesExternes">-</div>
+                <div class="label">Systèmes Externes</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="statNotifications">-</div>
+                <div class="label">Notifications non lues</div>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="card">
+                <div class="card-header">Répartition par type</div>
+                <div class="card-body chart-container">
+                    <canvas id="barChart" width="400" height="250"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">Proportion</div>
+                <div class="card-body chart-container">
+                    <canvas id="donutChart" width="400" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Recherche rapide</div>
+            <div class="card-body">
+                <div class="search-bar">
+                    <input type="text" id="searchTexte" class="form-control" placeholder="Rechercher par nom, IP, login...">
+                    <select id="searchType" class="form-control">
+                        <option value="">Tous les types</option>
+                        <option value="SERVEUR">Serveurs</option>
+                        <option value="SWITCH">Switches</option>
+                        <option value="SYSTEME_INTERNE">Systèmes Internes</option>
+                        <option value="SYSTEME_EXTERNE">Systèmes Externes</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="effectuerRecherche()">Rechercher</button>
+                </div>
+                <div id="resultatsRecherche"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+    function dessinerGraphiques(srv, sw, si, se) {
+        const couleurs = ['#42a5f5','#ffa726','#66bb6a','#ef5350'];
+        const labels = ['Serveurs','Switches','Syst. Internes','Syst. Externes'];
+        const valeurs = [srv, sw, si, se];
+
+        // Barres
+        const bar = document.getElementById('barChart');
+        if (bar) {
+            const ctx = bar.getContext('2d');
+            const w = bar.width, h = bar.height;
+            const max = Math.max(...valeurs, 1);
+            const pad = 40, bw = (w - pad * 2) / 4 - 20;
+
+            ctx.clearRect(0, 0, w, h);
+            // fond
+            ctx.fillStyle = '#fafafa';
+            ctx.fillRect(0, 0, w, h);
+
+            valeurs.forEach((v, i) => {
+                const x = pad + i * (bw + 30);
+                const bh = (v / max) * (h - 80);
+                // barre
+                ctx.fillStyle = couleurs[i];
+                ctx.fillRect(x, h - 30 - bh, bw, bh);
+                // valeur dessus
+                ctx.fillStyle = '#333';
+                ctx.font = 'bold 13px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(v, x + bw/2, h - 40 - bh);
+                // label dessous
+                const mots = labels[i].split(' ');
+                ctx.font = '11px Arial';
+                ctx.fillStyle = '#555';
+                mots.forEach((m, mi) => {
+                    ctx.fillText(m, x + bw/2, h - 10 + mi * 14);
+                });
+            });
+        }
+
+        // Donut
+        const don = document.getElementById('donutChart');
+        if (don) {
+            const ctx = don.getContext('2d');
+            const cx = don.width/2, cy = don.height/2, rayon = 80, ep = 35;
+            const total = valeurs.reduce((a,b) => a+b, 0);
+            if (total === 0) {
+                ctx.fillStyle = '#e0e0e0';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Aucune donnée', cx, cy + 5);
+                return;
+            }
+            let startAngle = -Math.PI/2;
+            valeurs.forEach((v, i) => {
+                if (v === 0) return;
+                const sliceAngle = (v / total) * 2 * Math.PI;
+                ctx.beginPath();
+                ctx.arc(cx, cy, rayon, startAngle, startAngle + sliceAngle);
+                ctx.arc(cx, cy, rayon - ep, startAngle + sliceAngle, startAngle, true);
+                ctx.closePath();
+                ctx.fillStyle = couleurs[i];
+                ctx.fill();
+                startAngle += sliceAngle;
+            });
+            // centre blanc
+            ctx.beginPath();
+            ctx.arc(cx, cy, rayon - ep, 0, 2*Math.PI);
+            ctx.fillStyle = '#fff';
+            ctx.fill();
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(total, cx, cy + 7);
+
+            // légende
+            let ly = 16;
+            couleurs.forEach((c, i) => {
+                if (valeurs[i] === 0) return;
+                ctx.fillStyle = c;
+                ctx.fillRect(12, ly, 12, 12);
+                ctx.fillStyle = '#333';
+                ctx.font = '11px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText(labels[i] + ' (' + valeurs[i] + ')', 30, ly + 10);
+                ly += 18;
+            });
+        }
+    }
+
+    async function chargerStats() {
+        try {
+            const [srv, sw, si, se, notif] = await Promise.all([
+                API.getServeurs(), API.getSwitches(),
+                API.getSystemesInternes(), API.getSystemesExternes(),
+                API.getCompteurNotifications()
+            ]);
+            document.getElementById('statServeurs').textContent = srv.data.length || 0;
+            document.getElementById('statSwitches').textContent = sw.data.length || 0;
+            document.getElementById('statSystemesInternes').textContent = si.data.length || 0;
+            document.getElementById('statSystemesExternes').textContent = se.data.length || 0;
+            document.getElementById('statNotifications').textContent = notif.data.nonLues || 0;
+
+            const badge = document.getElementById('notifBadge');
+            const count = notif.data.nonLues || 0;
+            if (count > 0) { badge.textContent = count; badge.style.display = 'inline'; }
+            else { badge.style.display = 'none'; }
+
+            dessinerGraphiques(srv.data.length, sw.data.length, si.data.length, se.data.length);
+        } catch (e) { afficherErreur('Erreur chargement statistiques'); }
+    }
+
+    async function effectuerRecherche() {
+        const texte = document.getElementById('searchTexte').value.trim();
+        if (!texte) { chargerStats(); return; }
+        const type = document.getElementById('searchType').value;
+        const div = document.getElementById('resultatsRecherche');
+
+        try {
+            const res = await API.rechercher(texte, type);
+            const data = res.data;
+            let html = '';
+
+            if (data.serveurs && data.serveurs.length > 0) {
+                html += '<h4 style="margin:16px 0 8px;">Serveurs</h4><table><thead><tr><th>Nom</th><th>IP</th><th>Login</th></tr></thead><tbody>';
+                data.serveurs.forEach(s => { html += '<tr><td>' + s.nom + '</td><td>' + (s.adresseIP||'') + '</td><td>' + (s.login||'') + '</td></tr>'; });
+                html += '</tbody></table>';
+            }
+            if (data.switches && data.switches.length > 0) {
+                html += '<h4 style="margin:16px 0 8px;">Switches</h4><table><thead><tr><th>Nom</th><th>MAC</th><th>Emplacement</th></tr></thead><tbody>';
+                data.switches.forEach(s => { html += '<tr><td>' + s.nom + '</td><td>' + (s.adresseMac||'') + '</td><td>' + (s.emplacement||'') + '</td></tr>'; });
+                html += '</tbody></table>';
+            }
+            if (data.systemesInternes && data.systemesInternes.length > 0) {
+                html += '<h4 style="margin:16px 0 8px;">Systèmes Internes</h4><table><thead><tr><th>Nom</th><th>URL</th><th>Login</th></tr></thead><tbody>';
+                data.systemesInternes.forEach(s => { html += '<tr><td>' + s.nom + '</td><td>' + (s.url||'') + '</td><td>' + (s.login||'') + '</td></tr>'; });
+                html += '</tbody></table>';
+            }
+            if (data.systemesExternes && data.systemesExternes.length > 0) {
+                html += '<h4 style="margin:16px 0 8px;">Systèmes Externes</h4><table><thead><tr><th>Nom</th><th>URL</th><th>Login</th></tr></thead><tbody>';
+                data.systemesExternes.forEach(s => { html += '<tr><td>' + s.nom + '</td><td>' + (s.url||'') + '</td><td>' + (s.login||'') + '</td></tr>'; });
+                html += '</tbody></table>';
+            }
+            if (!html) html = '<p style="color:var(--gray);padding:16px;">Aucun résultat trouvé</p>';
+            div.innerHTML = html;
+        } catch (e) { afficherErreur('Erreur lors de la recherche'); }
+    }
+
+    function deconnecter() {
+        fetch('/api/logout', { method: 'POST', credentials: 'include' })
+            .then(() => { window.location.href = '/login.html'; })
+            .catch(() => { window.location.href = '/login.html'; });
+    }
+
+    document.addEventListener('DOMContentLoaded', chargerStats);
+    document.getElementById('searchTexte').addEventListener('keyup', (e) => { if (e.key === 'Enter') effectuerRecherche(); });
+    </script>
+</body>
+</html>
