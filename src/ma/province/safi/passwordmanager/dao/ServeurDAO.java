@@ -76,7 +76,7 @@ public class ServeurDAO {
 
     public List<Serveur> lister() throws SQLException {
         List<Serveur> list = new ArrayList<>();
-        String sql = "SELECT IdServeur, NomServeur, AdresseIP, LoginServeur, DateDernierChangement FROM dbo.Serveur ORDER BY NomServeur";
+        String sql = "SELECT IdServeur, NomServeur, AdresseIP, LoginServeur, MotPasseChiffre, VecteurInitialisation, DateDernierChangement FROM dbo.Serveur ORDER BY NomServeur";
         try (Connection cn = DatabaseConnection.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -86,6 +86,8 @@ public class ServeurDAO {
                 s.setNom(rs.getString("NomServeur"));
                 s.setAdresseIP(rs.getString("AdresseIP"));
                 s.setLogin(rs.getString("LoginServeur"));
+                s.setMotPasseChiffre(rs.getString("MotPasseChiffre"));
+                s.setVecteurInitialisation(rs.getString("VecteurInitialisation"));
                 s.setDateDernierChangement(rs.getTimestamp("DateDernierChangement") != null ? rs.getTimestamp("DateDernierChangement").toLocalDateTime() : null);
                 list.add(s);
             }
@@ -95,7 +97,7 @@ public class ServeurDAO {
 
     public List<Serveur> rechercher(String texte) throws SQLException {
         List<Serveur> list = new ArrayList<>();
-        String sql = "SELECT IdServeur, NomServeur, AdresseIP, LoginServeur FROM dbo.Serveur WHERE NomServeur LIKE ? OR AdresseIP LIKE ? OR LoginServeur LIKE ? ORDER BY NomServeur";
+        String sql = "SELECT IdServeur, NomServeur, AdresseIP, LoginServeur, MotPasseChiffre, VecteurInitialisation FROM dbo.Serveur WHERE NomServeur LIKE ? OR AdresseIP LIKE ? OR LoginServeur LIKE ? ORDER BY NomServeur";
         try (Connection cn = DatabaseConnection.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
             String p = "%" + texte + "%";
@@ -107,6 +109,8 @@ public class ServeurDAO {
                     s.setNom(rs.getString("NomServeur"));
                     s.setAdresseIP(rs.getString("AdresseIP"));
                     s.setLogin(rs.getString("LoginServeur"));
+                    s.setMotPasseChiffre(rs.getString("MotPasseChiffre"));
+                    s.setVecteurInitialisation(rs.getString("VecteurInitialisation"));
                     list.add(s);
                 }
             }

@@ -1,6 +1,7 @@
 package ma.province.safi.passwordmanager.dao;
 
 import ma.province.safi.passwordmanager.config.DatabaseConnection;
+import ma.province.safi.passwordmanager.model.TypeDivisionExterne;
 import ma.province.safi.passwordmanager.model.DivisionExterne;
 import ma.province.safi.passwordmanager.model.DivisionInterne;
 
@@ -36,7 +37,7 @@ public class DivisionDAO {
                 DivisionExterne d = new DivisionExterne();
                 d.setIdDivisionExterne(rs.getInt("IdDivisionExterne"));
                 d.setNomDivision(rs.getString("NomDivision"));
-                d.setTypeDivision(rs.getString("TypeDivision"));
+                d.setType(TypeDivisionExterne.fromString(rs.getString("TypeDivision")));
                 list.add(d);
             }
         }

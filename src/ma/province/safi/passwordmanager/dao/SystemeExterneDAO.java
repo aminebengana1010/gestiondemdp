@@ -79,7 +79,7 @@ public class SystemeExterneDAO {
 
     public List<SystemeExterne> rechercher(String texte) throws SQLException {
         List<SystemeExterne> list = new ArrayList<>();
-        String sql = "SELECT IdSystemeExterne, NomSysteme, UrlSysteme, IdDivisionExterne, IdSystemeInterne, LoginSysteme, DateDernierChangement FROM dbo.SystemeExterne WHERE NomSysteme LIKE ? OR UrlSysteme LIKE ? OR LoginSysteme LIKE ? ORDER BY NomSysteme";
+        String sql = "SELECT IdSystemeExterne, NomSysteme, UrlSysteme, IdDivisionExterne, IdSystemeInterne, LoginSysteme, MotPasseChiffre, VecteurInitialisation, DateDernierChangement FROM dbo.SystemeExterne WHERE NomSysteme LIKE ? OR UrlSysteme LIKE ? OR LoginSysteme LIKE ? ORDER BY NomSysteme";
         try (Connection cn = DatabaseConnection.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
             String p = "%" + texte + "%";
@@ -93,7 +93,7 @@ public class SystemeExterneDAO {
 
     public List<SystemeExterne> lister() throws SQLException {
         List<SystemeExterne> list = new ArrayList<>();
-        String sql = "SELECT IdSystemeExterne, NomSysteme, UrlSysteme, IdDivisionExterne, IdSystemeInterne, LoginSysteme, DateDernierChangement FROM dbo.SystemeExterne ORDER BY NomSysteme";
+        String sql = "SELECT IdSystemeExterne, NomSysteme, UrlSysteme, IdDivisionExterne, IdSystemeInterne, LoginSysteme, MotPasseChiffre, VecteurInitialisation, DateDernierChangement FROM dbo.SystemeExterne ORDER BY NomSysteme";
         try (Connection cn = DatabaseConnection.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -129,6 +129,8 @@ public class SystemeExterneDAO {
         int idSi = rs.getInt("IdSystemeInterne");
         se.setIdSystemeInterneLie(rs.wasNull() ? null : idSi);
         se.setLogin(rs.getString("LoginSysteme"));
+        se.setMotPasseChiffre(rs.getString("MotPasseChiffre"));
+        se.setVecteurInitialisation(rs.getString("VecteurInitialisation"));
         Timestamp ts = rs.getTimestamp("DateDernierChangement");
         if (ts != null) se.setDateDernierChangement(ts.toLocalDateTime());
         return se;

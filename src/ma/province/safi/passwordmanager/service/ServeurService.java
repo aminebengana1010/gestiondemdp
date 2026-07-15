@@ -73,7 +73,11 @@ public class ServeurService {
         auditDAO.enregistrerOld("CONSULTATION", "SERVEUR", id, session.getIdUtilisateur(),
             "Consultation du mot de passe du serveur: " + s.getNom());
         broadcaster.diffuserNotification("🔑 Secret consulté - Serveur: " + s.getNom() + " par " + session.getNomUtilisateur(), "AUDIT");
-        return cryptoService.dechiffrer(s.getMotPasseChiffre(), s.getVecteurInitialisation());
+        try {
+            return cryptoService.dechiffrer(s.getMotPasseChiffre(), s.getVecteurInitialisation());
+        } catch (Exception e) {
+            throw new RuntimeException("Impossible de déchiffrer le mot de passe. La clé AES a changé (redémarrage ?). Ré-enregistrez le mot de passe.", e);
+        }
     }
 
     public void supprimer(int id, Session session) throws Exception {
@@ -85,7 +89,17 @@ public class ServeurService {
         broadcaster.diffuserNotification("Serveur supprimé: " + nom, "INFO");
     }
 
-    public List<Serveur> lister() throws SQLException { return serveurDAO.lister(); }
+    public List<Serveur> lister() throws SQLException {
+        List<Serveur> list = serveurDAO.lister();
+        for (Serveur s : list) {
+            try {
+                if (s.getMotPasseChiffre() != null) {
+                    s.setMotDePasseClair(cryptoService.dechiffrer(s.getMotPasseChiffre(), s.getVecteurInitialisation()));
+                }
+            } catch (Exception e) { /* ignore */ }
+        }
+        return list;
+    }
     public Serveur trouverParId(int id) throws SQLException { return serveurDAO.trouverParId(id); }
     public List<Serveur> rechercher(String texte) throws SQLException { return serveurDAO.rechercher(texte); }
 

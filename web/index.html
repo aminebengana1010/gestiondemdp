@@ -9,7 +9,7 @@
 <body>
     <!-- Navigation -->
     <nav class="navbar">
-        <a href="/index.html" class="navbar-brand"><img src="img/logo-province.svg" alt="Logo">Gestion MDP</a>
+        <a href="/index.html" class="navbar-brand"><img src="img/logo-province.png" alt="Logo">Gestion MDP</a>
         <div class="navbar-nav">
             <a href="/index.html" class="active">Dashboard</a>
             <a href="/serveurs.html">Serveurs</a>
@@ -216,28 +216,28 @@
             let html = '';
 
             if (data.serveurs && data.serveurs.length > 0) {
-                html += '<h4 style="margin:16px 0 8px;">Serveurs</h4><table><thead><tr><th>Nom</th><th>IP</th><th>Login</th></tr></thead><tbody>';
-                data.serveurs.forEach(s => { html += '<tr><td>' + s.nom + '</td><td>' + (s.adresseIP||'') + '</td><td>' + (s.login||'') + '</td></tr>'; });
+                html += '<h4 style="margin:16px 0 8px;">Serveurs</h4><table><thead><tr><th>Nom</th><th>IP</th><th>Login</th><th>Mot de passe</th></tr></thead><tbody>';
+                data.serveurs.forEach(s => { html += '<tr><td>' + s.nom + '</td><td>' + (s.adresseIP||'') + '</td><td>' + (s.login||'') + '</td><td class="pwd-masked">' + (s.motDePasse||'') + '</td></tr>'; });
                 html += '</tbody></table>';
             }
             if (data.switches && data.switches.length > 0) {
-                html += '<h4 style="margin:16px 0 8px;">Switches</h4><table><thead><tr><th>Nom</th><th>MAC</th><th>Emplacement</th></tr></thead><tbody>';
-                data.switches.forEach(s => { html += '<tr><td>' + s.nom + '</td><td>' + (s.adresseMac||'') + '</td><td>' + (s.emplacement||'') + '</td></tr>'; });
+                html += '<h4 style="margin:16px 0 8px;">Switches</h4><table><thead><tr><th>Nom</th><th>MAC</th><th>Emplacement</th><th>Mot de passe</th></tr></thead><tbody>';
+                data.switches.forEach(s => { html += '<tr><td>' + s.nom + '</td><td>' + (s.adresseMac||'') + '</td><td>' + (s.emplacement||'') + '</td><td class="pwd-masked">' + (s.motDePasse||'') + '</td></tr>'; });
                 html += '</tbody></table>';
             }
             if (data.systemesInternes && data.systemesInternes.length > 0) {
-                html += '<h4 style="margin:16px 0 8px;">Systèmes Internes</h4><table><thead><tr><th>Nom</th><th>URL</th><th>Login</th></tr></thead><tbody>';
-                data.systemesInternes.forEach(s => { html += '<tr><td>' + s.nom + '</td><td>' + (s.url||'') + '</td><td>' + (s.login||'') + '</td></tr>'; });
+                html += '<h4 style="margin:16px 0 8px;">Systèmes Internes</h4><table><thead><tr><th>Nom</th><th>URL</th><th>Login</th><th>Mot de passe</th></tr></thead><tbody>';
+                data.systemesInternes.forEach(s => { html += '<tr><td>' + s.nom + '</td><td>' + (s.url||'') + '</td><td>' + (s.login||'') + '</td><td class="pwd-masked">' + (s.motDePasse||'') + '</td></tr>'; });
                 html += '</tbody></table>';
             }
             if (data.systemesExternes && data.systemesExternes.length > 0) {
-                html += '<h4 style="margin:16px 0 8px;">Systèmes Externes</h4><table><thead><tr><th>Nom</th><th>URL</th><th>Login</th></tr></thead><tbody>';
-                data.systemesExternes.forEach(s => { html += '<tr><td>' + s.nom + '</td><td>' + (s.url||'') + '</td><td>' + (s.login||'') + '</td></tr>'; });
+                html += '<h4 style="margin:16px 0 8px;">Systèmes Externes</h4><table><thead><tr><th>Nom</th><th>URL</th><th>Login</th><th>Mot de passe</th></tr></thead><tbody>';
+                data.systemesExternes.forEach(s => { html += '<tr><td>' + s.nom + '</td><td>' + (s.url||'') + '</td><td>' + (s.login||'') + '</td><td class="pwd-masked">' + (s.motDePasse||'') + '</td></tr>'; });
                 html += '</tbody></table>';
             }
             if (!html) html = '<p style="color:var(--gray);padding:16px;">Aucun résultat trouvé</p>';
             div.innerHTML = html;
-        } catch (e) { afficherErreur('Erreur lors de la recherche'); }
+        } catch (e) { afficherErreur(e.message || 'Erreur lors de la recherche'); }
     }
 
     function deconnecter() {

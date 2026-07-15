@@ -8,7 +8,7 @@
 </head>
 <body>
     <nav class="navbar">
-        <a href="/index.html" class="navbar-brand"><img src="img/logo-province.svg" alt="Logo">Gestion MDP</a>
+        <a href="/index.html" class="navbar-brand"><img src="img/logo-province.png" alt="Logo">Gestion MDP</a>
         <div class="navbar-nav">
             <a href="/index.html">Dashboard</a>
             <a href="/serveurs.html">Serveurs</a>
@@ -62,7 +62,7 @@
                 <div class="card-body">
                     <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
                         <input id="inputExterne" class="form-control" placeholder="Nom de la division externe" style="flex:1;">
-                        <input id="inputType" class="form-control" placeholder="Type (ex: AAL, Caïdat...)" style="width:180px;">
+                        <select id="inputType" class="form-control" style="width:180px;"><option value="AAL">AAL</option><option value="Caïdat">Caïdat</option></select>
                         <button class="btn btn-primary" onclick="ajouterExterne()">Ajouter</button>
                     </div>
                     <div class="table-responsive">

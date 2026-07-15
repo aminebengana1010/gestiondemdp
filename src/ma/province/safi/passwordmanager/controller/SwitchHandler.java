@@ -69,9 +69,13 @@ public class SwitchHandler implements HttpHandler {
                 case "DELETE" -> supprimer(exchange);
                 default -> ResponseUtil.json(exchange, 405, "{\"erreur\":\"Méthode non autorisée\"}");
             }
+        } catch (IllegalArgumentException e) {
+            ResponseUtil.json(exchange, 400, JsonUtil.json("erreur", e.getMessage()));
+        } catch (SecurityException e) {
+            ResponseUtil.json(exchange, 403, JsonUtil.json("erreur", e.getMessage()));
         } catch (Exception e) {
             e.printStackTrace();
-            ResponseUtil.json(exchange, 500, JsonUtil.json("erreur", "Erreur interne"));
+            ResponseUtil.json(exchange, 500, JsonUtil.json("erreur", e.getMessage() != null ? e.getMessage() : "Erreur interne"));
         }
     }
 
@@ -161,6 +165,7 @@ public class SwitchHandler implements HttpHandler {
               .append(JsonUtil.jsonString("adresseMac", sw.getAdresseMAC())).append(",")
               .append(JsonUtil.jsonString("emplacement", sw.getEmplacement())).append(",")
               .append(JsonUtil.jsonString("login", sw.getLogin())).append(",")
+              .append(JsonUtil.jsonString("motDePasse", sw.getMotDePasseClair() != null ? sw.getMotDePasseClair() : "")).append(",")
               .append(JsonUtil.jsonString("dateDernierChangement",
                   sw.getDateDernierChangement() != null ? sw.getDateDernierChangement().toString() : ""))
               .append("}");

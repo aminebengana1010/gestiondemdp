@@ -343,6 +343,15 @@ select.form-control { appearance: auto; }
 /* --- Action buttons in table --- */
 .action-btns { display: flex; gap: 4px; }
 
+/* --- Password masked column --- */
+.pwd-masked {
+    font-family: monospace;
+    letter-spacing: 3px;
+    color: var(--gray);
+    font-size: 13px;
+    user-select: none;
+}
+
 /* --- Password reveal --- */
 .password-field {
     font-family: monospace;

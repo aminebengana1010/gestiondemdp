@@ -50,8 +50,18 @@ public class Main {
         SessionManager sessionManager = new SessionManager();
         SecurityInterceptor security = new SecurityInterceptor(sessionManager);
 
-        // Générer ou charger la clé AES (en production: depuis variable d'environnement)
-        SecretKey aesKey = CryptoService.genererCle();
+        // Générer ou charger la clé AES (persistée dans un fichier pour survie au redémarrage)
+        java.nio.file.Path clePath = java.nio.file.Paths.get(".aes_key");
+        SecretKey aesKey;
+        if (java.nio.file.Files.exists(clePath)) {
+            byte[] encoded = java.nio.file.Files.readAllBytes(clePath);
+            aesKey = CryptoService.base64ToCle(new String(encoded, java.nio.charset.StandardCharsets.UTF_8).trim());
+            System.out.println("[INFO] Clé AES chargée depuis .aes_key");
+        } else {
+            aesKey = CryptoService.genererCle();
+            java.nio.file.Files.write(clePath, CryptoService.cleToBase64(aesKey).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            System.out.println("[INFO] Nouvelle clé AES générée et sauvegardée dans .aes_key");
+        }
         CryptoService cryptoService = new CryptoService(aesKey);
 
         // Services
@@ -64,7 +74,7 @@ public class Main {
         SystemeExterneService systemeExterneService = new SystemeExterneService(systemeExterneDAO, auditDAO, notificationDAO, cryptoService);
 
         ExportService exportService = new ExportService(serveurService, switchService, systemeInterneService, systemeExterneService, auditDAO);
-        RechercheService rechercheService = new RechercheService(serveurDAO, switchDAO, systemeInterneDAO, systemeExterneDAO);
+        RechercheService rechercheService = new RechercheService(serveurDAO, switchDAO, systemeInterneDAO, systemeExterneDAO, cryptoService);
 
         // === 3. Créer l'utilisateur admin par défaut si vide ===
         authService.creerPremierAdministrateur();

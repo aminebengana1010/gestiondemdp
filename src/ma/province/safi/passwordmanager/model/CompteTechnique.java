@@ -9,6 +9,7 @@ public abstract class CompteTechnique implements EntiteAvecSecret {
     protected String motPasseChiffre;
     protected String vecteurInitialisation;
     protected LocalDateTime dateDernierChangement;
+    protected String motDePasseClair; // transient, non persisté
 
     @Override
     public int getId() { return id; }
@@ -30,4 +31,7 @@ public abstract class CompteTechnique implements EntiteAvecSecret {
 
     public LocalDateTime getDateDernierChangement() { return dateDernierChangement; }
     public void setDateDernierChangement(LocalDateTime dateDernierChangement) { this.dateDernierChangement = dateDernierChangement; }
+
+    public String getMotDePasseClair() { return motDePasseClair; }
+    public void setMotDePasseClair(String motDePasseClair) { this.motDePasseClair = motDePasseClair; }
 }

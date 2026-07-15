@@ -85,7 +85,7 @@ public class ServeurHandler implements HttpHandler {
             ResponseUtil.json(exchange, 403, JsonUtil.json("erreur", e.getMessage()));
         } catch (Exception e) {
             e.printStackTrace();
-            ResponseUtil.json(exchange, 500, JsonUtil.json("erreur", "Erreur interne"));
+            ResponseUtil.json(exchange, 500, JsonUtil.json("erreur", e.getMessage() != null ? e.getMessage() : "Erreur interne"));
         }
     }
 
@@ -180,6 +180,7 @@ public class ServeurHandler implements HttpHandler {
               .append(JsonUtil.jsonString("nom", s.getNom())).append(",")
               .append(JsonUtil.jsonString("adresseIP", s.getAdresseIP())).append(",")
               .append(JsonUtil.jsonString("login", s.getLogin())).append(",")
+              .append(JsonUtil.jsonString("motDePasse", s.getMotDePasseClair() != null ? s.getMotDePasseClair() : "")).append(",")
               .append(JsonUtil.jsonString("dateDernierChangement",
                   s.getDateDernierChangement() != null ? s.getDateDernierChangement().toString() : ""))
               .append("}");

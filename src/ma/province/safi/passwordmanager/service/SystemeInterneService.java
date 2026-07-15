@@ -63,7 +63,11 @@ public class SystemeInterneService {
         auditDAO.enregistrerOld("CONSULTATION", "SYSTEME_INTERNE", id, session.getIdUtilisateur(),
             "Consultation mot de passe SI interne: " + si.getNom());
         broadcaster.diffuserNotification("🔑 Secret consulté - SI interne: " + si.getNom() + " par " + session.getNomUtilisateur(), "AUDIT");
-        return cryptoService.dechiffrer(si.getMotPasseChiffre(), si.getVecteurInitialisation());
+        try {
+            return cryptoService.dechiffrer(si.getMotPasseChiffre(), si.getVecteurInitialisation());
+        } catch (Exception e) {
+            throw new RuntimeException("Impossible de déchiffrer le mot de passe. La clé AES a changé (redémarrage ?). Ré-enregistrez le mot de passe.", e);
+        }
     }
 
     public void supprimer(int id, Session session) throws Exception {
@@ -75,7 +79,17 @@ public class SystemeInterneService {
         broadcaster.diffuserNotification("Système interne supprimé: " + nom, "INFO");
     }
 
-    public List<SystemeInterne> lister() throws SQLException { return dao.lister(); }
+    public List<SystemeInterne> lister() throws SQLException {
+        List<SystemeInterne> list = dao.lister();
+        for (SystemeInterne si : list) {
+            try {
+                if (si.getMotPasseChiffre() != null) {
+                    si.setMotDePasseClair(cryptoService.dechiffrer(si.getMotPasseChiffre(), si.getVecteurInitialisation()));
+                }
+            } catch (Exception e) { /* ignore */ }
+        }
+        return list;
+    }
     public SystemeInterne trouverParId(int id) throws SQLException { return dao.trouverParId(id); }
 
     private void verifierDroitConsultation(Session session) {

@@ -85,7 +85,7 @@ public class SystemeInterneDAO {
 
     public List<SystemeInterne> lister() throws SQLException {
         List<SystemeInterne> list = new ArrayList<>();
-        String sql = "SELECT IdSystemeInterne, NomSysteme, UrlSysteme, IdDivisionInterne, LoginAdmin, DateDernierChangement FROM dbo.SystemeInterne ORDER BY NomSysteme";
+        String sql = "SELECT IdSystemeInterne, NomSysteme, UrlSysteme, IdDivisionInterne, LoginAdmin, MotPasseAdminChiffre, VecteurInitialisation, DateDernierChangement FROM dbo.SystemeInterne ORDER BY NomSysteme";
         try (Connection cn = DatabaseConnection.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -96,6 +96,8 @@ public class SystemeInterneDAO {
                 si.setUrl(rs.getString("UrlSysteme"));
                 si.setIdDivisionInterne(rs.getInt("IdDivisionInterne"));
                 si.setLogin(rs.getString("LoginAdmin"));
+                si.setMotPasseChiffre(rs.getString("MotPasseAdminChiffre"));
+                si.setVecteurInitialisation(rs.getString("VecteurInitialisation"));
                 si.setDateDernierChangement(rs.getTimestamp("DateDernierChangement") != null ? rs.getTimestamp("DateDernierChangement").toLocalDateTime() : null);
                 list.add(si);
             }
@@ -105,7 +107,7 @@ public class SystemeInterneDAO {
 
     public List<SystemeInterne> rechercher(String texte) throws SQLException {
         List<SystemeInterne> list = new ArrayList<>();
-        String sql = "SELECT IdSystemeInterne, NomSysteme, UrlSysteme, IdDivisionInterne, LoginAdmin FROM dbo.SystemeInterne WHERE NomSysteme LIKE ? OR UrlSysteme LIKE ? OR LoginAdmin LIKE ? ORDER BY NomSysteme";
+        String sql = "SELECT IdSystemeInterne, NomSysteme, UrlSysteme, IdDivisionInterne, LoginAdmin, MotPasseAdminChiffre, VecteurInitialisation FROM dbo.SystemeInterne WHERE NomSysteme LIKE ? OR UrlSysteme LIKE ? OR LoginAdmin LIKE ? ORDER BY NomSysteme";
         try (Connection cn = DatabaseConnection.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
             String p = "%" + texte + "%";
@@ -118,6 +120,8 @@ public class SystemeInterneDAO {
                     si.setUrl(rs.getString("UrlSysteme"));
                     si.setIdDivisionInterne(rs.getInt("IdDivisionInterne"));
                     si.setLogin(rs.getString("LoginAdmin"));
+                    si.setMotPasseChiffre(rs.getString("MotPasseAdminChiffre"));
+                    si.setVecteurInitialisation(rs.getString("VecteurInitialisation"));
                     list.add(si);
                 }
             }

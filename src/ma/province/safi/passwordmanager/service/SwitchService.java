@@ -63,7 +63,11 @@ public class SwitchService {
         auditDAO.enregistrerOld("CONSULTATION", "SWITCH", id, session.getIdUtilisateur(),
             "Consultation mot de passe switch: " + sw.getNom());
         broadcaster.diffuserNotification("🔑 Secret consulté - Switch: " + sw.getNom() + " par " + session.getNomUtilisateur(), "AUDIT");
-        return cryptoService.dechiffrer(sw.getMotPasseChiffre(), sw.getVecteurInitialisation());
+        try {
+            return cryptoService.dechiffrer(sw.getMotPasseChiffre(), sw.getVecteurInitialisation());
+        } catch (Exception e) {
+            throw new RuntimeException("Impossible de déchiffrer le mot de passe. La clé AES a changé (redémarrage ?). Ré-enregistrez le mot de passe.", e);
+        }
     }
 
     public void supprimer(int id, Session session) throws Exception {
@@ -75,7 +79,17 @@ public class SwitchService {
         broadcaster.diffuserNotification("Switch supprimé: " + nom, "INFO");
     }
 
-    public List<SwitchReseau> lister() throws SQLException { return switchDAO.lister(); }
+    public List<SwitchReseau> lister() throws SQLException {
+        List<SwitchReseau> list = switchDAO.lister();
+        for (SwitchReseau sw : list) {
+            try {
+                if (sw.getMotPasseChiffre() != null) {
+                    sw.setMotDePasseClair(cryptoService.dechiffrer(sw.getMotPasseChiffre(), sw.getVecteurInitialisation()));
+                }
+            } catch (Exception e) { /* ignore */ }
+        }
+        return list;
+    }
     public SwitchReseau trouverParId(int id) throws SQLException { return switchDAO.trouverParId(id); }
     public List<SwitchReseau> rechercher(String texte) throws SQLException { return switchDAO.rechercher(texte); }
 

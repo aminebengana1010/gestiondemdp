@@ -5,6 +5,7 @@ import com.sun.net.httpserver.HttpHandler;
 import ma.province.safi.passwordmanager.dao.DivisionDAO;
 import ma.province.safi.passwordmanager.model.DivisionExterne;
 import ma.province.safi.passwordmanager.model.DivisionInterne;
+import ma.province.safi.passwordmanager.model.TypeDivisionExterne;
 import ma.province.safi.passwordmanager.security.SecurityInterceptor;
 import ma.province.safi.passwordmanager.util.JsonUtil;
 import ma.province.safi.passwordmanager.util.ResponseUtil;
@@ -55,7 +56,13 @@ public class DivisionHandler implements HttpHandler {
                     String nom = params.get("nom");
                     String type = params.get("type");
                     if (nom == null || nom.isBlank() || type == null || type.isBlank()) {
-                        ResponseUtil.json(exchange, 400, "{\"erreur\":\"Le nom et le type sont requis\"}");
+                        ResponseUtil.json(exchange, 400, "{\"erreur\":\"Le nom et le type (AAL ou Caïdat) sont requis\"}");
+                        return;
+                    }
+                    try {
+                        TypeDivisionExterne.fromString(type);
+                    } catch (IllegalArgumentException e) {
+                        ResponseUtil.json(exchange, 400, JsonUtil.json("erreur", e.getMessage()));
                         return;
                     }
                     divisionDAO.ajouterExterne(nom, type);
@@ -83,7 +90,13 @@ public class DivisionHandler implements HttpHandler {
                     String nom = params.get("nom");
                     String type = params.get("type");
                     if (nom == null || nom.isBlank() || type == null || type.isBlank()) {
-                        ResponseUtil.json(exchange, 400, "{\"erreur\":\"Le nom et le type sont requis\"}");
+                        ResponseUtil.json(exchange, 400, "{\"erreur\":\"Le nom et le type (AAL ou Caïdat) sont requis\"}");
+                        return;
+                    }
+                    try {
+                        TypeDivisionExterne.fromString(type);
+                    } catch (IllegalArgumentException e) {
+                        ResponseUtil.json(exchange, 400, JsonUtil.json("erreur", e.getMessage()));
                         return;
                     }
                     divisionDAO.modifierExterne(id, nom, type);
@@ -145,7 +158,7 @@ public class DivisionHandler implements HttpHandler {
             sb.append("{")
               .append(JsonUtil.jsonInt("id", d.getIdDivisionExterne())).append(",")
               .append(JsonUtil.jsonString("nom", d.getNomDivision())).append(",")
-              .append(JsonUtil.jsonString("type", d.getTypeDivision()))
+              .append(JsonUtil.jsonString("type", d.getType() != null ? d.getType().toString() : ""))
               .append("}");
         }
         sb.append("]");

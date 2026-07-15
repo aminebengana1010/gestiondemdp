@@ -8,7 +8,7 @@
 </head>
 <body>
     <nav class="navbar">
-        <a href="/index.html" class="navbar-brand"><img src="img/logo-province.svg" alt="Logo">Gestion MDP</a>
+        <a href="/index.html" class="navbar-brand"><img src="img/logo-province.png" alt="Logo">Gestion MDP</a>
         <div class="navbar-nav">
             <a href="/index.html">Dashboard</a>
             <a href="/serveurs.html" class="active">Serveurs</a>
@@ -44,7 +44,7 @@
             <div class="card-body">
                 <div class="table-responsive" id="tableContainer">
                     <table>
-                        <thead><tr><th>Nom</th><th>Adresse IP</th><th>Login</th><th>Dernier changement</th><th>Actions</th></tr></thead>
+                        <thead><tr><th>Nom</th><th>Adresse IP</th><th>Login</th><th>Mot de passe</th><th>Dernier changement</th><th>Actions</th></tr></thead>
                         <tbody id="tableBody"></tbody>
                     </table>
                 </div>
@@ -122,6 +122,7 @@
                     '<td>' + s.nom + '</td>' +
                     '<td>' + (s.adresseIP||'') + '</td>' +
                     '<td>' + (s.login||'') + '</td>' +
+                    '<td class="pwd-masked">' + (s.motDePasse||'') + '</td>' +
                     '<td>' + (s.dateDernierChangement ? new Date(s.dateDernierChangement).toLocaleDateString('fr-FR') : '') + '</td>' +
                     '<td class="action-btns">' +
                         (window.utilisateurRole === 'Administrateur' ? '<button class="btn btn-sm btn-info" onclick="consulterSecret(' + s.id + ')">🔑 Voir</button>' : '') +

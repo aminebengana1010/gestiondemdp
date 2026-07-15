@@ -66,9 +66,13 @@ public class SystemeInterneHandler implements HttpHandler {
                 case "DELETE" -> supprimer(exchange);
                 default -> ResponseUtil.json(exchange, 405, "{\"erreur\":\"Méthode non autorisée\"}");
             }
+        } catch (IllegalArgumentException e) {
+            ResponseUtil.json(exchange, 400, JsonUtil.json("erreur", e.getMessage()));
+        } catch (SecurityException e) {
+            ResponseUtil.json(exchange, 403, JsonUtil.json("erreur", e.getMessage()));
         } catch (Exception e) {
             e.printStackTrace();
-            ResponseUtil.json(exchange, 500, JsonUtil.json("erreur", "Erreur interne"));
+            ResponseUtil.json(exchange, 500, JsonUtil.json("erreur", e.getMessage() != null ? e.getMessage() : "Erreur interne"));
         }
     }
 
@@ -159,7 +163,8 @@ public class SystemeInterneHandler implements HttpHandler {
               .append(JsonUtil.jsonString("nom", si.getNom())).append(",")
               .append(JsonUtil.jsonString("url", si.getUrl())).append(",")
               .append(JsonUtil.jsonInt("idDivision", si.getIdDivisionInterne())).append(",")
-              .append(JsonUtil.jsonString("login", si.getLogin()))
+              .append(JsonUtil.jsonString("login", si.getLogin())).append(",")
+              .append(JsonUtil.jsonString("motDePasse", si.getMotDePasseClair() != null ? si.getMotDePasseClair() : ""))
               .append("}");
         }
         sb.append("]");

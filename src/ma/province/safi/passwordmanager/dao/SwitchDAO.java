@@ -85,7 +85,7 @@ public class SwitchDAO {
 
     public List<SwitchReseau> lister() throws SQLException {
         List<SwitchReseau> list = new ArrayList<>();
-        String sql = "SELECT IdSwitch, NomSwitch, AdresseMAC, Emplacement, LoginSwitch, DateDernierChangement FROM dbo.SwitchReseau ORDER BY NomSwitch";
+        String sql = "SELECT IdSwitch, NomSwitch, AdresseMAC, Emplacement, LoginSwitch, MotPasseChiffre, VecteurInitialisation, DateDernierChangement FROM dbo.SwitchReseau ORDER BY NomSwitch";
         try (Connection cn = DatabaseConnection.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -96,6 +96,8 @@ public class SwitchDAO {
                 sw.setAdresseMAC(rs.getString("AdresseMAC"));
                 sw.setEmplacement(rs.getString("Emplacement"));
                 sw.setLogin(rs.getString("LoginSwitch"));
+                sw.setMotPasseChiffre(rs.getString("MotPasseChiffre"));
+                sw.setVecteurInitialisation(rs.getString("VecteurInitialisation"));
                 sw.setDateDernierChangement(rs.getTimestamp("DateDernierChangement") != null ? rs.getTimestamp("DateDernierChangement").toLocalDateTime() : null);
                 list.add(sw);
             }
@@ -105,7 +107,7 @@ public class SwitchDAO {
 
     public List<SwitchReseau> rechercher(String texte) throws SQLException {
         List<SwitchReseau> list = new ArrayList<>();
-        String sql = "SELECT IdSwitch, NomSwitch, AdresseMAC, Emplacement, LoginSwitch FROM dbo.SwitchReseau WHERE NomSwitch LIKE ? OR AdresseMAC LIKE ? OR Emplacement LIKE ? OR LoginSwitch LIKE ? ORDER BY NomSwitch";
+        String sql = "SELECT IdSwitch, NomSwitch, AdresseMAC, Emplacement, LoginSwitch, MotPasseChiffre, VecteurInitialisation FROM dbo.SwitchReseau WHERE NomSwitch LIKE ? OR AdresseMAC LIKE ? OR Emplacement LIKE ? OR LoginSwitch LIKE ? ORDER BY NomSwitch";
         try (Connection cn = DatabaseConnection.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
             String p = "%" + texte + "%";
@@ -118,6 +120,8 @@ public class SwitchDAO {
                     sw.setAdresseMAC(rs.getString("AdresseMAC"));
                     sw.setEmplacement(rs.getString("Emplacement"));
                     sw.setLogin(rs.getString("LoginSwitch"));
+                    sw.setMotPasseChiffre(rs.getString("MotPasseChiffre"));
+                    sw.setVecteurInitialisation(rs.getString("VecteurInitialisation"));
                     list.add(sw);
                 }
             }

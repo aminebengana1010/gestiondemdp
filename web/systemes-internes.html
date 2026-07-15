@@ -8,7 +8,7 @@
 </head>
 <body>
     <nav class="navbar">
-        <a href="/index.html" class="navbar-brand"><img src="img/logo-province.svg" alt="Logo">Gestion MDP</a>
+        <a href="/index.html" class="navbar-brand"><img src="img/logo-province.png" alt="Logo">Gestion MDP</a>
         <div class="navbar-nav">
             <a href="/index.html">Dashboard</a>
             <a href="/serveurs.html">Serveurs</a>
@@ -44,7 +44,7 @@
             <div class="card-body">
                 <div class="table-responsive">
                     <table>
-                        <thead><tr><th>Nom</th><th>URL</th><th>Division</th><th>Login</th><th>Actions</th></tr></thead>
+                        <thead><tr><th>Nom</th><th>URL</th><th>Division</th><th>Login</th><th>Mot de passe</th><th>Actions</th></tr></thead>
                         <tbody id="tableBody"></tbody>
                     </table>
                 </div>
@@ -141,6 +141,7 @@
                     '<td>' + (s.url||'') + '</td>' +
                     '<td>' + divName + '</td>' +
                     '<td>' + (s.login||'') + '</td>' +
+                    '<td class="pwd-masked">' + (s.motDePasse||'') + '</td>' +
                     '<td class="action-btns">' +
                         (window.utilisateurRole === 'Administrateur' ? '<button class="btn btn-sm btn-info" onclick="consulterSecret(' + s.id + ')">🔑 Voir</button>' : '') +
                         '<button class="btn btn-sm btn-warning" onclick="ouvrirModif(' + s.id + ')">✏️ Modifier</button>' +

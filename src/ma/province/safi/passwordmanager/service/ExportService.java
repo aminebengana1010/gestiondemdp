@@ -31,12 +31,13 @@ public class ExportService {
 
     public String exporterServeursCSV(Session session) throws Exception {
         StringBuilder sb = new StringBuilder();
-        sb.append("Nom;Adresse IP;Login;Dernier changement\n");
+        sb.append("Nom;Adresse IP;Login;Mot de passe;Dernier changement\n");
         List<Serveur> list = serveurService.lister();
         for (Serveur s : list) {
             sb.append(s.getNom()).append(";")
               .append(s.getAdresseIP() != null ? s.getAdresseIP() : "").append(";")
               .append(s.getLogin() != null ? s.getLogin() : "").append(";")
+              .append("********").append(";")
               .append(s.getDateDernierChangement() != null ? s.getDateDernierChangement().format(DTF) : "")
               .append("\n");
         }
@@ -46,13 +47,14 @@ public class ExportService {
 
     public String exporterSwitchesCSV(Session session) throws Exception {
         StringBuilder sb = new StringBuilder();
-        sb.append("Nom;Adresse MAC;Emplacement;Login;Dernier changement\n");
+        sb.append("Nom;Adresse MAC;Emplacement;Login;Mot de passe;Dernier changement\n");
         List<SwitchReseau> list = switchService.lister();
         for (SwitchReseau sw : list) {
             sb.append(sw.getNom()).append(";")
               .append(sw.getAdresseMAC() != null ? sw.getAdresseMAC() : "").append(";")
               .append(sw.getEmplacement() != null ? sw.getEmplacement() : "").append(";")
               .append(sw.getLogin() != null ? sw.getLogin() : "").append(";")
+              .append("********").append(";")
               .append(sw.getDateDernierChangement() != null ? sw.getDateDernierChangement().format(DTF) : "")
               .append("\n");
         }
@@ -62,12 +64,13 @@ public class ExportService {
 
     public String exporterSystemesInternesCSV(Session session) throws Exception {
         StringBuilder sb = new StringBuilder();
-        sb.append("Nom;URL;Login;Dernier changement\n");
+        sb.append("Nom;URL;Login;Mot de passe;Dernier changement\n");
         List<SystemeInterne> list = systemeInterneService.lister();
         for (SystemeInterne si : list) {
             sb.append(si.getNom()).append(";")
               .append(si.getUrl() != null ? si.getUrl() : "").append(";")
               .append(si.getLogin() != null ? si.getLogin() : "").append(";")
+              .append("********").append(";")
               .append(si.getDateDernierChangement() != null ? si.getDateDernierChangement().format(DTF) : "")
               .append("\n");
         }
@@ -77,12 +80,13 @@ public class ExportService {
 
     public String exporterSystemesExternesCSV(Session session) throws Exception {
         StringBuilder sb = new StringBuilder();
-        sb.append("Nom;URL;Login;Dernier changement\n");
+        sb.append("Nom;URL;Login;Mot de passe;Dernier changement\n");
         List<SystemeExterne> list = systemeExterneService.lister();
         for (SystemeExterne se : list) {
             sb.append(se.getNom()).append(";")
               .append(se.getUrl() != null ? se.getUrl() : "").append(";")
               .append(se.getLogin() != null ? se.getLogin() : "").append(";")
+              .append("********").append(";")
               .append(se.getDateDernierChangement() != null ? se.getDateDernierChangement().format(DTF) : "")
               .append("\n");
         }
@@ -95,21 +99,21 @@ public class ExportService {
     public String exporterServeursHTML(Session session) throws Exception {
         List<Serveur> list = serveurService.lister();
         String rows = buildRows(list, s -> new String[]{
-            s.getNom(), s.getAdresseIP(), s.getLogin(),
+            s.getNom(), s.getAdresseIP(), s.getLogin(), "********",
             s.getDateDernierChangement() != null ? s.getDateDernierChangement().format(DTF) : ""
         });
-        String html = htmlPage("Serveurs", new String[]{"Nom", "Adresse IP", "Login", "Dernier changement"}, rows);
+        String html = htmlPage("Serveurs", new String[]{"Nom", "Adresse IP", "Login", "Mot de passe", "Dernier changement"}, rows);
         auditDAO.enregistrerOld("EXPORT", "SERVEUR", null, session.getIdUtilisateur(), "Export PDF serveurs");
         return html;
     }
 
     public String exporterSwitchesHTML(Session session) throws Exception {
         List<SwitchReseau> list = switchService.lister();
-        String rows = buildRows(list, sw -> new String[]{
-            sw.getNom(), sw.getAdresseMAC(), sw.getEmplacement(), sw.getLogin(),
-            sw.getDateDernierChangement() != null ? sw.getDateDernierChangement().format(DTF) : ""
+        String rows = buildRows(list, s -> new String[]{
+            s.getNom(), s.getAdresseMAC(), s.getEmplacement(), s.getLogin(), "********",
+            s.getDateDernierChangement() != null ? s.getDateDernierChangement().format(DTF) : ""
         });
-        String html = htmlPage("Switches", new String[]{"Nom", "Adresse MAC", "Emplacement", "Login", "Dernier changement"}, rows);
+        String html = htmlPage("Switches", new String[]{"Nom", "Adresse MAC", "Emplacement", "Login", "Mot de passe", "Dernier changement"}, rows);
         auditDAO.enregistrerOld("EXPORT", "SWITCH", null, session.getIdUtilisateur(), "Export PDF switches");
         return html;
     }
@@ -117,10 +121,10 @@ public class ExportService {
     public String exporterSystemesInternesHTML(Session session) throws Exception {
         List<SystemeInterne> list = systemeInterneService.lister();
         String rows = buildRows(list, si -> new String[]{
-            si.getNom(), si.getUrl(), si.getLogin(),
+            si.getNom(), si.getUrl(), si.getLogin(), "********",
             si.getDateDernierChangement() != null ? si.getDateDernierChangement().format(DTF) : ""
         });
-        String html = htmlPage("Systèmes Internes", new String[]{"Nom", "URL", "Login", "Dernier changement"}, rows);
+        String html = htmlPage("Systèmes Internes", new String[]{"Nom", "URL", "Login", "Mot de passe", "Dernier changement"}, rows);
         auditDAO.enregistrerOld("EXPORT", "SYSTEME_INTERNE", null, session.getIdUtilisateur(), "Export PDF systèmes internes");
         return html;
     }
@@ -128,10 +132,10 @@ public class ExportService {
     public String exporterSystemesExternesHTML(Session session) throws Exception {
         List<SystemeExterne> list = systemeExterneService.lister();
         String rows = buildRows(list, se -> new String[]{
-            se.getNom(), se.getUrl(), se.getLogin(),
+            se.getNom(), se.getUrl(), se.getLogin(), "********",
             se.getDateDernierChangement() != null ? se.getDateDernierChangement().format(DTF) : ""
         });
-        String html = htmlPage("Systèmes Externes", new String[]{"Nom", "URL", "Login", "Dernier changement"}, rows);
+        String html = htmlPage("Systèmes Externes", new String[]{"Nom", "URL", "Login", "Mot de passe", "Dernier changement"}, rows);
         auditDAO.enregistrerOld("EXPORT", "SYSTEME_EXTERNE", null, session.getIdUtilisateur(), "Export PDF systèmes externes");
         return html;
     }
