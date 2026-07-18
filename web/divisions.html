@@ -41,13 +41,14 @@
                     <span>Divisions Internes</span>
                 </div>
                 <div class="card-body">
-                    <div style="display:flex;gap:8px;margin-bottom:16px;">
-                        <input id="inputInterne" class="form-control" placeholder="Nom de la division interne" style="flex:1;">
+                    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+                        <input id="inputInterne" class="form-control" placeholder="Nom de la division interne" style="flex:1;min-width:150px;">
+                        <input id="inputService" class="form-control" placeholder="Service" style="flex:1;min-width:150px;">
                         <button class="btn btn-primary" onclick="ajouterInterne()">Ajouter</button>
                     </div>
                     <div class="table-responsive">
                         <table>
-                            <thead><tr><th>ID</th><th>Nom</th><th>Actions</th></tr></thead>
+                            <thead><tr><th>ID</th><th>Nom</th><th>Service</th><th>Actions</th></tr></thead>
                             <tbody id="tableInternes"></tbody>
                         </table>
                     </div>
@@ -62,7 +63,7 @@
                 <div class="card-body">
                     <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
                         <input id="inputExterne" class="form-control" placeholder="Nom de la division externe" style="flex:1;">
-                        <select id="inputType" class="form-control" style="width:180px;"><option value="AAL">AAL</option><option value="Caïdat">Caïdat</option></select>
+                        <select id="inputType" class="form-control" style="width:180px;"><option value="AAL">AAL</option><option value="Caïdat">Caïdat</option><option value="Pashalik">Pashalik</option><option value="Cercle">Cercle</option><option value="District 1">District 1</option><option value="District 2">District 2</option><option value="District 3">District 3</option></select>
                         <button class="btn btn-primary" onclick="ajouterExterne()">Ajouter</button>
                     </div>
                     <div class="table-responsive">
@@ -87,13 +88,14 @@
                 tbody.innerHTML += '<tr>' +
                     '<td>' + d.id + '</td>' +
                     '<td>' + d.nom + '</td>' +
+                    '<td>' + (d.service||'') + '</td>' +
                     '<td class="action-btns">' +
                         '<button class="btn btn-sm btn-warning" onclick="ouvrirModifInterne(' + d.id + ')">✏️ Modifier</button>' +
                         '<button class="btn btn-sm btn-danger" onclick="supprimerInterne(' + d.id + ')">🗑️ Supprimer</button>' +
                     '</td></tr>';
             });
             if (res.data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--gray);">Aucune division interne</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--gray);">Aucune division interne</td></tr>';
             }
         } catch (e) { afficherErreur('Erreur chargement divisions internes'); }
     }
@@ -121,10 +123,12 @@
 
     async function ajouterInterne() {
         const nom = document.getElementById('inputInterne').value.trim();
+        const service = document.getElementById('inputService').value.trim();
         if (!nom) { afficherErreur('Veuillez saisir un nom'); return; }
         try {
-            await API.ajouterDivisionInterne({ nom });
+            await API.ajouterDivisionInterne({ nom, service });
             document.getElementById('inputInterne').value = '';
+            document.getElementById('inputService').value = '';
             afficherSucces('Division interne ajoutée');
             chargerInternes();
         } catch (e) { afficherErreur(e.message); }
@@ -146,7 +150,8 @@
     function ouvrirModifInterne(id) {
         const nom = prompt('Nouveau nom pour la division interne :');
         if (!nom || !nom.trim()) return;
-        API.modifierDivisionInterne(id, { nom: nom.trim() }).then(() => {
+        const service = prompt('Nouveau service :');
+        API.modifierDivisionInterne(id, { nom: nom.trim(), service: service ? service.trim() : '' }).then(() => {
             afficherSucces('Division interne modifiée');
             chargerInternes();
         }).catch(e => afficherErreur(e.message));
@@ -155,7 +160,7 @@
     function ouvrirModifExterne(id) {
         const nom = prompt('Nouveau nom pour la division externe :');
         if (!nom || !nom.trim()) return;
-        const type = prompt('Nouveau type (AAL, Caïdat...) :');
+        const type = prompt('Nouveau type (AAL, Caïdat, Pashalik, Cercle, District 1, District 2, District 3...) :');
         if (!type || !type.trim()) return;
         API.modifierDivisionExterne(id, { nom: nom.trim(), type: type.trim() }).then(() => {
             afficherSucces('Division externe modifiée');

@@ -82,9 +82,12 @@ GO
 CREATE TABLE dbo.DivisionInterne (
     IdDivisionInterne  INT IDENTITY(1,1) NOT NULL,
     NomDivision        NVARCHAR(100) NOT NULL,
-    CONSTRAINT PK_DivisionInterne PRIMARY KEY CLUSTERED (IdDivisionInterne),
-    CONSTRAINT UQ_DivisionInterne_Nom UNIQUE (NomDivision)
+    Service            NVARCHAR(255) NULL,
+    CONSTRAINT PK_DivisionInterne PRIMARY KEY CLUSTERED (IdDivisionInterne)
 );
+GO
+
+CREATE UNIQUE NONCLUSTERED INDEX UQ_DivisionInterne_NomService ON dbo.DivisionInterne (NomDivision, Service) WHERE Service IS NOT NULL;
 GO
 
 CREATE TABLE dbo.DivisionExterne (
@@ -93,7 +96,7 @@ CREATE TABLE dbo.DivisionExterne (
     TypeDivision       NVARCHAR(20) NOT NULL,
     CONSTRAINT PK_DivisionExterne PRIMARY KEY CLUSTERED (IdDivisionExterne),
     CONSTRAINT UQ_DivisionExterne_NomType UNIQUE (NomDivision, TypeDivision),
-    CONSTRAINT CK_DivisionExterne_Type CHECK (TypeDivision IN (N'AAL', N'Caïdat'))
+    CONSTRAINT CK_DivisionExterne_Type CHECK (TypeDivision IN (N'AAL', N'Caïdat', N'Pashalik', N'Cercle', N'District 1', N'District 2', N'District 3'))
 );
 GO
 

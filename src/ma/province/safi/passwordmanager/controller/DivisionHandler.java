@@ -46,17 +46,19 @@ public class DivisionHandler implements HttpHandler {
 
                 if (path.endsWith("/internes")) {
                     String nom = params.get("nom");
+                    String service = params.get("service");
                     if (nom == null || nom.isBlank()) {
                         ResponseUtil.json(exchange, 400, "{\"erreur\":\"Le nom est requis\"}");
                         return;
                     }
-                    divisionDAO.ajouterInterne(nom);
+                    if (service != null && service.isBlank()) service = null;
+                    divisionDAO.ajouterInterne(nom, service);
                     ResponseUtil.json(exchange, 201, "{\"succes\":true,\"message\":\"Division interne ajoutée\"}");
                 } else {
                     String nom = params.get("nom");
                     String type = params.get("type");
                     if (nom == null || nom.isBlank() || type == null || type.isBlank()) {
-                        ResponseUtil.json(exchange, 400, "{\"erreur\":\"Le nom et le type (AAL ou Caïdat) sont requis\"}");
+                        ResponseUtil.json(exchange, 400, "{\"erreur\":\"Le nom et le type (AAL, Caïdat, Pashalik, Cercle, District 1, District 2, District 3) sont requis\"}");
                         return;
                     }
                     try {
@@ -80,17 +82,19 @@ public class DivisionHandler implements HttpHandler {
 
                 if (path.contains("/internes")) {
                     String nom = params.get("nom");
+                    String service = params.get("service");
                     if (nom == null || nom.isBlank()) {
                         ResponseUtil.json(exchange, 400, "{\"erreur\":\"Le nom est requis\"}");
                         return;
                     }
-                    divisionDAO.modifierInterne(id, nom);
+                    if (service != null && service.isBlank()) service = null;
+                    divisionDAO.modifierInterne(id, nom, service);
                     ResponseUtil.json(exchange, 200, "{\"succes\":true,\"message\":\"Division interne modifiée\"}");
                 } else {
                     String nom = params.get("nom");
                     String type = params.get("type");
                     if (nom == null || nom.isBlank() || type == null || type.isBlank()) {
-                        ResponseUtil.json(exchange, 400, "{\"erreur\":\"Le nom et le type (AAL ou Caïdat) sont requis\"}");
+                        ResponseUtil.json(exchange, 400, "{\"erreur\":\"Le nom et le type (AAL, Caïdat, Pashalik, Cercle, District 1, District 2, District 3) sont requis\"}");
                         return;
                     }
                     try {
@@ -142,7 +146,8 @@ public class DivisionHandler implements HttpHandler {
             first = false;
             sb.append("{")
               .append(JsonUtil.jsonInt("id", d.getIdDivisionInterne())).append(",")
-              .append(JsonUtil.jsonString("nom", d.getNomDivision()))
+              .append(JsonUtil.jsonString("nom", d.getNomDivision())).append(",")
+              .append(JsonUtil.jsonString("service", d.getService() != null ? d.getService() : ""))
               .append("}");
         }
         sb.append("]");

@@ -13,7 +13,7 @@ public class DivisionDAO {
 
     public List<DivisionInterne> listerInternes() throws SQLException {
         List<DivisionInterne> list = new ArrayList<>();
-        String sql = "SELECT IdDivisionInterne, NomDivision FROM dbo.DivisionInterne ORDER BY NomDivision";
+        String sql = "SELECT IdDivisionInterne, NomDivision, Service FROM dbo.DivisionInterne ORDER BY NomDivision";
         try (Connection cn = DatabaseConnection.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -21,6 +21,7 @@ public class DivisionDAO {
                 DivisionInterne d = new DivisionInterne();
                 d.setIdDivisionInterne(rs.getInt("IdDivisionInterne"));
                 d.setNomDivision(rs.getString("NomDivision"));
+                d.setService(rs.getString("Service"));
                 list.add(d);
             }
         }
@@ -44,11 +45,12 @@ public class DivisionDAO {
         return list;
     }
 
-    public void ajouterInterne(String nom) throws SQLException {
-        String sql = "INSERT INTO dbo.DivisionInterne (NomDivision) VALUES (?)";
+    public void ajouterInterne(String nom, String service) throws SQLException {
+        String sql = "INSERT INTO dbo.DivisionInterne (NomDivision, Service) VALUES (?, ?)";
         try (Connection cn = DatabaseConnection.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setString(1, nom);
+            ps.setString(2, service);
             ps.executeUpdate();
         }
     }
@@ -63,12 +65,13 @@ public class DivisionDAO {
         }
     }
 
-    public void modifierInterne(int id, String nom) throws SQLException {
-        String sql = "UPDATE dbo.DivisionInterne SET NomDivision = ? WHERE IdDivisionInterne = ?";
+    public void modifierInterne(int id, String nom, String service) throws SQLException {
+        String sql = "UPDATE dbo.DivisionInterne SET NomDivision = ?, Service = ? WHERE IdDivisionInterne = ?";
         try (Connection cn = DatabaseConnection.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setString(1, nom);
-            ps.setInt(2, id);
+            ps.setString(2, service);
+            ps.setInt(3, id);
             ps.executeUpdate();
         }
     }

@@ -37,7 +37,7 @@ public class ExportService {
             sb.append(s.getNom()).append(";")
               .append(s.getAdresseIP() != null ? s.getAdresseIP() : "").append(";")
               .append(s.getLogin() != null ? s.getLogin() : "").append(";")
-              .append("********").append(";")
+              .append(s.getMotDePasseClair() != null ? s.getMotDePasseClair() : "").append(";")
               .append(s.getDateDernierChangement() != null ? s.getDateDernierChangement().format(DTF) : "")
               .append("\n");
         }
@@ -54,7 +54,7 @@ public class ExportService {
               .append(sw.getAdresseMAC() != null ? sw.getAdresseMAC() : "").append(";")
               .append(sw.getEmplacement() != null ? sw.getEmplacement() : "").append(";")
               .append(sw.getLogin() != null ? sw.getLogin() : "").append(";")
-              .append("********").append(";")
+              .append(sw.getMotDePasseClair() != null ? sw.getMotDePasseClair() : "").append(";")
               .append(sw.getDateDernierChangement() != null ? sw.getDateDernierChangement().format(DTF) : "")
               .append("\n");
         }
@@ -70,7 +70,7 @@ public class ExportService {
             sb.append(si.getNom()).append(";")
               .append(si.getUrl() != null ? si.getUrl() : "").append(";")
               .append(si.getLogin() != null ? si.getLogin() : "").append(";")
-              .append("********").append(";")
+              .append(si.getMotDePasseClair() != null ? si.getMotDePasseClair() : "").append(";")
               .append(si.getDateDernierChangement() != null ? si.getDateDernierChangement().format(DTF) : "")
               .append("\n");
         }
@@ -86,7 +86,7 @@ public class ExportService {
             sb.append(se.getNom()).append(";")
               .append(se.getUrl() != null ? se.getUrl() : "").append(";")
               .append(se.getLogin() != null ? se.getLogin() : "").append(";")
-              .append("********").append(";")
+              .append(se.getMotDePasseClair() != null ? se.getMotDePasseClair() : "").append(";")
               .append(se.getDateDernierChangement() != null ? se.getDateDernierChangement().format(DTF) : "")
               .append("\n");
         }
@@ -99,7 +99,8 @@ public class ExportService {
     public String exporterServeursHTML(Session session) throws Exception {
         List<Serveur> list = serveurService.lister();
         String rows = buildRows(list, s -> new String[]{
-            s.getNom(), s.getAdresseIP(), s.getLogin(), "********",
+            s.getNom(), s.getAdresseIP(), s.getLogin(),
+            s.getMotDePasseClair() != null ? s.getMotDePasseClair() : "",
             s.getDateDernierChangement() != null ? s.getDateDernierChangement().format(DTF) : ""
         });
         String html = htmlPage("Serveurs", new String[]{"Nom", "Adresse IP", "Login", "Mot de passe", "Dernier changement"}, rows);
@@ -110,7 +111,8 @@ public class ExportService {
     public String exporterSwitchesHTML(Session session) throws Exception {
         List<SwitchReseau> list = switchService.lister();
         String rows = buildRows(list, s -> new String[]{
-            s.getNom(), s.getAdresseMAC(), s.getEmplacement(), s.getLogin(), "********",
+            s.getNom(), s.getAdresseMAC(), s.getEmplacement(), s.getLogin(),
+            s.getMotDePasseClair() != null ? s.getMotDePasseClair() : "",
             s.getDateDernierChangement() != null ? s.getDateDernierChangement().format(DTF) : ""
         });
         String html = htmlPage("Switches", new String[]{"Nom", "Adresse MAC", "Emplacement", "Login", "Mot de passe", "Dernier changement"}, rows);
@@ -121,7 +123,8 @@ public class ExportService {
     public String exporterSystemesInternesHTML(Session session) throws Exception {
         List<SystemeInterne> list = systemeInterneService.lister();
         String rows = buildRows(list, si -> new String[]{
-            si.getNom(), si.getUrl(), si.getLogin(), "********",
+            si.getNom(), si.getUrl(), si.getLogin(),
+            si.getMotDePasseClair() != null ? si.getMotDePasseClair() : "",
             si.getDateDernierChangement() != null ? si.getDateDernierChangement().format(DTF) : ""
         });
         String html = htmlPage("Systèmes Internes", new String[]{"Nom", "URL", "Login", "Mot de passe", "Dernier changement"}, rows);
@@ -132,7 +135,8 @@ public class ExportService {
     public String exporterSystemesExternesHTML(Session session) throws Exception {
         List<SystemeExterne> list = systemeExterneService.lister();
         String rows = buildRows(list, se -> new String[]{
-            se.getNom(), se.getUrl(), se.getLogin(), "********",
+            se.getNom(), se.getUrl(), se.getLogin(),
+            se.getMotDePasseClair() != null ? se.getMotDePasseClair() : "",
             se.getDateDernierChangement() != null ? se.getDateDernierChangement().format(DTF) : ""
         });
         String html = htmlPage("Systèmes Externes", new String[]{"Nom", "URL", "Login", "Mot de passe", "Dernier changement"}, rows);

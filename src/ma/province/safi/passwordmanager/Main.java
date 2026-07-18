@@ -2,6 +2,7 @@ package ma.province.safi.passwordmanager;
 
 import com.sun.net.httpserver.HttpServer;
 import ma.province.safi.passwordmanager.config.DatabaseConnection;
+import ma.province.safi.passwordmanager.config.DatabaseInitializer;
 import ma.province.safi.passwordmanager.controller.*;
 import ma.province.safi.passwordmanager.dao.*;
 import ma.province.safi.passwordmanager.security.CryptoService;
@@ -34,6 +35,18 @@ public class Main {
             System.exit(1);
         }
         System.out.println("[INFO] Connexion SQL Server réussie.");
+
+        // === 1.5. Création automatique des tables ===
+        try {
+            System.out.println("[INFO] Vérification/création des tables...");
+            DatabaseInitializer.initialiser();
+            DatabaseInitializer.mettreAJourContrainteDivisionType();
+            DatabaseInitializer.mettreAJourColonneService();
+            System.out.println("[INFO] Tables vérifiées avec succès.");
+        } catch (Exception e) {
+            System.err.println("[ERREUR] Échec de l'initialisation des tables: " + e.getMessage());
+            System.exit(1);
+        }
 
         // === 2. Injection de dépendances ===
         // DAO
@@ -115,6 +128,7 @@ public class Main {
         server.createContext("/api/notifications", new NotificationHandler(notificationService, security));
         server.createContext("/api/notifications/sse", new SseHandler());
         server.createContext("/api/audit", new AuditHandler(auditDAO, security));
+        server.createContext("/api/schema", new SchemaHandler(security));
         server.createContext("/api/recherche", new RechercheHandler(rechercheService, security));
 
         server.setExecutor(Executors.newFixedThreadPool(10));
