@@ -57,8 +57,11 @@ public class DivisionHandler implements HttpHandler {
                 } else {
                     String nom = params.get("nom");
                     String type = params.get("type");
+                    String sousType = params.get("sousType");
+                    String caidatNom = params.get("caidatNom");
+                    if ("null".equals(caidatNom)) caidatNom = null;
                     if (nom == null || nom.isBlank() || type == null || type.isBlank()) {
-                        ResponseUtil.json(exchange, 400, "{\"erreur\":\"Le nom et le type (AAL, Caïdat, Pashalik, Cercle, District 1, District 2, District 3) sont requis\"}");
+                        ResponseUtil.json(exchange, 400, "{\"erreur\":\"Le nom et le type (AAL, Commune, Pashalik, District) sont requis\"}");
                         return;
                     }
                     try {
@@ -67,7 +70,7 @@ public class DivisionHandler implements HttpHandler {
                         ResponseUtil.json(exchange, 400, JsonUtil.json("erreur", e.getMessage()));
                         return;
                     }
-                    divisionDAO.ajouterExterne(nom, type);
+                    divisionDAO.ajouterExterne(nom, type, sousType, caidatNom);
                     ResponseUtil.json(exchange, 201, "{\"succes\":true,\"message\":\"Division externe ajoutée\"}");
                 }
             } else if ("PUT".equals(method)) {
@@ -93,8 +96,11 @@ public class DivisionHandler implements HttpHandler {
                 } else {
                     String nom = params.get("nom");
                     String type = params.get("type");
+                    String sousType = params.get("sousType");
+                    String caidatNom = params.get("caidatNom");
+                    if ("null".equals(caidatNom)) caidatNom = null;
                     if (nom == null || nom.isBlank() || type == null || type.isBlank()) {
-                        ResponseUtil.json(exchange, 400, "{\"erreur\":\"Le nom et le type (AAL, Caïdat, Pashalik, Cercle, District 1, District 2, District 3) sont requis\"}");
+                        ResponseUtil.json(exchange, 400, "{\"erreur\":\"Le nom et le type (AAL, Commune, Pashalik, District) sont requis\"}");
                         return;
                     }
                     try {
@@ -103,7 +109,7 @@ public class DivisionHandler implements HttpHandler {
                         ResponseUtil.json(exchange, 400, JsonUtil.json("erreur", e.getMessage()));
                         return;
                     }
-                    divisionDAO.modifierExterne(id, nom, type);
+                    divisionDAO.modifierExterne(id, nom, type, sousType, caidatNom);
                     ResponseUtil.json(exchange, 200, "{\"succes\":true,\"message\":\"Division externe modifiée\"}");
                 }
             } else if ("DELETE".equals(method)) {
@@ -163,7 +169,9 @@ public class DivisionHandler implements HttpHandler {
             sb.append("{")
               .append(JsonUtil.jsonInt("id", d.getIdDivisionExterne())).append(",")
               .append(JsonUtil.jsonString("nom", d.getNomDivision())).append(",")
-              .append(JsonUtil.jsonString("type", d.getType() != null ? d.getType().toString() : ""))
+              .append(JsonUtil.jsonString("type", d.getType() != null ? d.getType().toString() : "")).append(",")
+              .append(JsonUtil.jsonString("sousType", d.getSousType() != null ? d.getSousType() : "")).append(",")
+              .append(JsonUtil.jsonString("caidatNom", d.getCaidatNom() != null ? d.getCaidatNom() : ""))
               .append("}");
         }
         sb.append("]");

@@ -30,7 +30,7 @@ public class DivisionDAO {
 
     public List<DivisionExterne> listerExternes() throws SQLException {
         List<DivisionExterne> list = new ArrayList<>();
-        String sql = "SELECT IdDivisionExterne, NomDivision, TypeDivision FROM dbo.DivisionExterne ORDER BY NomDivision";
+        String sql = "SELECT IdDivisionExterne, NomDivision, TypeDivision, SousType, CaidatNom FROM dbo.DivisionExterne ORDER BY NomDivision";
         try (Connection cn = DatabaseConnection.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -39,10 +39,41 @@ public class DivisionDAO {
                 d.setIdDivisionExterne(rs.getInt("IdDivisionExterne"));
                 d.setNomDivision(rs.getString("NomDivision"));
                 d.setType(TypeDivisionExterne.fromString(rs.getString("TypeDivision")));
+                d.setSousType(rs.getString("SousType"));
+                d.setCaidatNom(rs.getString("CaidatNom"));
                 list.add(d);
             }
         }
         return list;
+    }
+
+    public void ajouterExterne(String nom, String type, String sousType, String caidatNom) throws SQLException {
+        String sql = "INSERT INTO dbo.DivisionExterne (NomDivision, TypeDivision, SousType, CaidatNom) VALUES (?, ?, ?, ?)";
+        try (Connection cn = DatabaseConnection.getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setString(1, nom);
+            ps.setString(2, type);
+            if (sousType != null && !sousType.isBlank()) ps.setString(3, sousType);
+            else ps.setNull(3, Types.NVARCHAR);
+            if (caidatNom != null && !caidatNom.isBlank()) ps.setString(4, caidatNom);
+            else ps.setNull(4, Types.NVARCHAR);
+            ps.executeUpdate();
+        }
+    }
+
+    public void modifierExterne(int id, String nom, String type, String sousType, String caidatNom) throws SQLException {
+        String sql = "UPDATE dbo.DivisionExterne SET NomDivision = ?, TypeDivision = ?, SousType = ?, CaidatNom = ? WHERE IdDivisionExterne = ?";
+        try (Connection cn = DatabaseConnection.getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setString(1, nom);
+            ps.setString(2, type);
+            if (sousType != null && !sousType.isBlank()) ps.setString(3, sousType);
+            else ps.setNull(3, Types.NVARCHAR);
+            if (caidatNom != null && !caidatNom.isBlank()) ps.setString(4, caidatNom);
+            else ps.setNull(4, Types.NVARCHAR);
+            ps.setInt(5, id);
+            ps.executeUpdate();
+        }
     }
 
     public void ajouterInterne(String nom, String service) throws SQLException {
@@ -55,33 +86,12 @@ public class DivisionDAO {
         }
     }
 
-    public void ajouterExterne(String nom, String type) throws SQLException {
-        String sql = "INSERT INTO dbo.DivisionExterne (NomDivision, TypeDivision) VALUES (?, ?)";
-        try (Connection cn = DatabaseConnection.getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
-            ps.setString(1, nom);
-            ps.setString(2, type);
-            ps.executeUpdate();
-        }
-    }
-
     public void modifierInterne(int id, String nom, String service) throws SQLException {
         String sql = "UPDATE dbo.DivisionInterne SET NomDivision = ?, Service = ? WHERE IdDivisionInterne = ?";
         try (Connection cn = DatabaseConnection.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setString(1, nom);
             ps.setString(2, service);
-            ps.setInt(3, id);
-            ps.executeUpdate();
-        }
-    }
-
-    public void modifierExterne(int id, String nom, String type) throws SQLException {
-        String sql = "UPDATE dbo.DivisionExterne SET NomDivision = ?, TypeDivision = ? WHERE IdDivisionExterne = ?";
-        try (Connection cn = DatabaseConnection.getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
-            ps.setString(1, nom);
-            ps.setString(2, type);
             ps.setInt(3, id);
             ps.executeUpdate();
         }

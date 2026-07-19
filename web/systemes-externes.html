@@ -131,7 +131,7 @@
         ['ajoutDivision','modifDivision'].forEach(id => {
             const sel = document.getElementById(id);
             sel.innerHTML = '';
-            divisions.forEach(d => { sel.innerHTML += '<option value="'+d.id+'">'+d.nom+'</option>'; });
+            divisions.forEach(d => { sel.innerHTML += '<option value="'+d.id+'">['+d.type+'] '+d.nom+'</option>'; });
         });
         const selLie = document.getElementById('ajoutLie');
         selLie.innerHTML = '<option value="">- Aucun -</option>';
@@ -231,10 +231,27 @@
 
     async function ajouterDivisionExterneDepuis(selectId) {
         const input = document.getElementById(selectId + 'Input');
-        const nom = input.value.trim();
-        if (!nom) { afficherErreur('Saisissez un nom de division'); return; }
+        const nomSaisi = input.value.trim();
+        if (!nomSaisi) { afficherErreur('Saisissez un nom de division'); return; }
+        const type = prompt('Type (AAL, Commune, Pashalik, District) :');
+        if (!type) return;
+        const typesValides = ['AAL', 'Commune', 'Pashalik', 'District'];
+        if (!typesValides.includes(type)) { afficherErreur('Type invalide'); return; }
+        const sousTypes = { AAL: 'District 1', Commune: 'Abda', Pashalik: 'SAFI', District: 'District 1' };
+        const sousType = prompt('Sous-type (' + Object.keys(sousTypes).map(k => k + ': ' + sousTypes[k]).join(', ') + ') :');
+        if (!sousType) return;
+        let caidat = null;
+        if (type === 'Commune') {
+            caidat = prompt('Caïdat :');
+            if (!caidat) { afficherErreur('Le caïdat est requis pour Commune'); return; }
+        }
+        let nom = '';
+        if (type === 'AAL') nom = 'AAL - ' + sousType;
+        else if (type === 'Commune') nom = 'Commune ' + sousType + ' - ' + caidat;
+        else if (type === 'Pashalik') nom = 'Pashalik ' + sousType;
+        else if (type === 'District') nom = 'District ' + sousType;
         try {
-            await API.ajouterDivisionExterne({ nom, type: 'AAL' });
+            await API.ajouterDivisionExterne({ nom, type, sousType, caidatNom: caidat });
             input.value = '';
             afficherSucces('Division "' + nom + '" ajoutée');
             await remplirSelects();

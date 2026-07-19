@@ -67,22 +67,28 @@ public final class DatabaseInitializer {
     }
 
     public static void mettreAJourContrainteDivisionType() throws SQLException {
-        try (Connection cn = DatabaseConnection.getConnection()) {
-            // Vérifier la définition actuelle de la contrainte
-            String sql = "SELECT OBJECT_DEFINITION(OBJECT_ID('CK_DivisionExterne_Type'))";
-            try (Statement st = cn.createStatement();
-                 ResultSet rs = st.executeQuery(sql)) {
-                if (rs.next()) {
-                    String def = rs.getString(1);
-                    if (def != null && !def.contains("District 3")) {
-                        try (Statement st2 = cn.createStatement()) {
-                            st2.execute("ALTER TABLE dbo.DivisionExterne DROP CONSTRAINT CK_DivisionExterne_Type");
-                            st2.execute("ALTER TABLE dbo.DivisionExterne ADD CONSTRAINT CK_DivisionExterne_Type CHECK (TypeDivision IN (N'AAL', N'Caïdat', N'Pashalik', N'Cercle', N'District 1', N'District 2', N'District 3'))");
-                            System.out.println("[DB] Contrainte CK_DivisionExterne_Type mise à jour.");
-                        }
-                    }
-                }
-            }
+        try (Connection cn = DatabaseConnection.getConnection();
+             Statement st = cn.createStatement()) {
+            // Delete old data incompatible with new constraint
+            st.execute("DELETE FROM dbo.SystemeExterne WHERE IdDivisionExterne IN (SELECT IdDivisionExterne FROM dbo.DivisionExterne WHERE TypeDivision NOT IN (N'AAL', N'Commune', N'Pashalik', N'District'))");
+            st.execute("DELETE FROM dbo.DivisionExterne WHERE TypeDivision NOT IN (N'AAL', N'Commune', N'Pashalik', N'District')");
+            // Drop old constraint if exists
+            try { st.execute("ALTER TABLE dbo.DivisionExterne DROP CONSTRAINT CK_DivisionExterne_Type"); }
+            catch (SQLException ignored) {}
+            // Drop old unique constraint if exists
+            try { st.execute("ALTER TABLE dbo.DivisionExterne DROP CONSTRAINT UQ_DivisionExterne_NomType"); }
+            catch (SQLException ignored) {}
+            // Add new columns if missing
+            try { st.execute("ALTER TABLE dbo.DivisionExterne ADD SousType NVARCHAR(50) NULL"); }
+            catch (SQLException ignored) {}
+            try { st.execute("ALTER TABLE dbo.DivisionExterne ADD CaidatNom NVARCHAR(255) NULL"); }
+            catch (SQLException ignored) {}
+            // Add new constraint
+            st.execute("ALTER TABLE dbo.DivisionExterne ADD CONSTRAINT CK_DivisionExterne_Type CHECK (TypeDivision IN (N'AAL', N'Commune', N'Pashalik', N'District'))");
+            // Add new unique on NomDivision
+            try { st.execute("ALTER TABLE dbo.DivisionExterne ADD CONSTRAINT UQ_DivisionExterne_Nom UNIQUE (NomDivision)"); }
+            catch (SQLException ignored) {}
+            System.out.println("[DB] Contrainte CK_DivisionExterne_Type et colonnes mises à jour.");
         }
     }
 

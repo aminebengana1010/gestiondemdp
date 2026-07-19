@@ -94,9 +94,11 @@ CREATE TABLE dbo.DivisionExterne (
     IdDivisionExterne  INT IDENTITY(1,1) NOT NULL,
     NomDivision        NVARCHAR(100) NOT NULL,
     TypeDivision       NVARCHAR(20) NOT NULL,
+    SousType           NVARCHAR(50) NULL,
+    CaidatNom          NVARCHAR(255) NULL,
     CONSTRAINT PK_DivisionExterne PRIMARY KEY CLUSTERED (IdDivisionExterne),
-    CONSTRAINT UQ_DivisionExterne_NomType UNIQUE (NomDivision, TypeDivision),
-    CONSTRAINT CK_DivisionExterne_Type CHECK (TypeDivision IN (N'AAL', N'Caïdat', N'Pashalik', N'Cercle', N'District 1', N'District 2', N'District 3'))
+    CONSTRAINT UQ_DivisionExterne_Nom UNIQUE (NomDivision),
+    CONSTRAINT CK_DivisionExterne_Type CHECK (TypeDivision IN (N'AAL', N'Commune', N'Pashalik', N'District'))
 );
 GO
 

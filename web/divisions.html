@@ -63,12 +63,22 @@
                 <div class="card-body">
                     <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
                         <input id="inputExterne" class="form-control" placeholder="Nom de la division externe" style="flex:1;">
-                        <select id="inputType" class="form-control" style="width:180px;"><option value="AAL">AAL</option><option value="Caïdat">Caïdat</option><option value="Pashalik">Pashalik</option><option value="Cercle">Cercle</option><option value="District 1">District 1</option><option value="District 2">District 2</option><option value="District 3">District 3</option></select>
+                        <select id="inputType" class="form-control" style="width:140px;" onchange="changerTypeExterne()">
+                            <option value="">-- Type --</option>
+                            <option value="AAL">AAL</option>
+                            <option value="Commune">Commune</option>
+                            <option value="Pashalik">Pashalik</option>
+                            <option value="District">District</option>
+                        </select>
+                        <select id="inputSousType" class="form-control" style="width:160px;display:none;">
+                            <option value="">-- Sous-type --</option>
+                        </select>
+                        <input id="inputCaidat" class="form-control" placeholder="Caïdat" style="width:160px;display:none;">
                         <button class="btn btn-primary" onclick="ajouterExterne()">Ajouter</button>
                     </div>
                     <div class="table-responsive">
                         <table>
-                            <thead><tr><th>ID</th><th>Nom</th><th>Type</th><th>Actions</th></tr></thead>
+                            <thead><tr><th>ID</th><th>Nom</th><th>Type</th><th>Sous-type</th><th>Caïdat</th><th>Actions</th></tr></thead>
                             <tbody id="tableExternes"></tbody>
                         </table>
                     </div>
@@ -79,6 +89,45 @@
 
     <script src="js/api.js"></script>
     <script>
+    const SOUS_TYPES = {
+        AAL: ['District 1', 'District 2', 'District 3'],
+        Commune: ['Abda', 'Gzoula', 'Hrara'],
+        Pashalik: ['SAFI', 'Gzoula', 'jemaa shaim'],
+        District: ['District 1', 'District 2', 'District 3']
+    };
+
+    function changerTypeExterne() {
+        const type = document.getElementById('inputType').value;
+        const sousTypeSel = document.getElementById('inputSousType');
+        const caidatInput = document.getElementById('inputCaidat');
+
+        sousTypeSel.innerHTML = '<option value="">-- Sous-type --</option>';
+        sousTypeSel.style.display = 'none';
+        caidatInput.style.display = 'none';
+        caidatInput.value = '';
+
+        if (type) {
+            const sts = SOUS_TYPES[type] || [];
+            sts.forEach(st => {
+                sousTypeSel.innerHTML += '<option value="' + st + '">' + st + '</option>';
+            });
+            sousTypeSel.style.display = 'inline-block';
+        }
+
+        sousTypeSel.value = '';
+    }
+
+    function changerSousType() {
+        const type = document.getElementById('inputType').value;
+        const caidatInput = document.getElementById('inputCaidat');
+        if (type === 'Commune') {
+            caidatInput.style.display = 'inline-block';
+        } else {
+            caidatInput.style.display = 'none';
+            caidatInput.value = '';
+        }
+    }
+
     async function chargerInternes() {
         try {
             const res = await API.getDivisionsInternes();
@@ -110,13 +159,15 @@
                     '<td>' + d.id + '</td>' +
                     '<td>' + d.nom + '</td>' +
                     '<td>' + d.type + '</td>' +
+                    '<td>' + (d.sousType||'') + '</td>' +
+                    '<td>' + (d.caidatNom||'') + '</td>' +
                     '<td class="action-btns">' +
                         '<button class="btn btn-sm btn-warning" onclick="ouvrirModifExterne(' + d.id + ')">✏️ Modifier</button>' +
                         '<button class="btn btn-sm btn-danger" onclick="supprimerExterne(' + d.id + ')">🗑️ Supprimer</button>' +
                     '</td></tr>';
             });
             if (res.data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--gray);">Aucune division externe</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--gray);">Aucune division externe</td></tr>';
             }
         } catch (e) { afficherErreur('Erreur chargement divisions externes'); }
     }
@@ -136,12 +187,23 @@
 
     async function ajouterExterne() {
         const nom = document.getElementById('inputExterne').value.trim();
-        const type = document.getElementById('inputType').value.trim();
+        const type = document.getElementById('inputType').value;
+        const sousType = document.getElementById('inputSousType').value;
+        const caidat = document.getElementById('inputCaidat').value.trim();
+
         if (!nom) { afficherErreur('Veuillez saisir un nom'); return; }
-        if (!type) { afficherErreur('Veuillez saisir un type'); return; }
+        if (!type) { afficherErreur('Veuillez choisir un type'); return; }
+        if (!sousType) { afficherErreur('Veuillez choisir un sous-type'); return; }
+        if (type === 'Commune' && !caidat) { afficherErreur('Veuillez saisir le caïdat'); return; }
+
         try {
-            await API.ajouterDivisionExterne({ nom, type });
+            await API.ajouterDivisionExterne({ nom, type, sousType, caidatNom: caidat });
             document.getElementById('inputExterne').value = '';
+            document.getElementById('inputType').value = '';
+            document.getElementById('inputSousType').value = '';
+            document.getElementById('inputSousType').style.display = 'none';
+            document.getElementById('inputCaidat').value = '';
+            document.getElementById('inputCaidat').style.display = 'none';
             afficherSucces('Division externe ajoutée');
             chargerExternes();
         } catch (e) { afficherErreur(e.message); }
@@ -158,11 +220,18 @@
     }
 
     function ouvrirModifExterne(id) {
-        const nom = prompt('Nouveau nom pour la division externe :');
+        const nom = prompt('Nouveau nom :');
         if (!nom || !nom.trim()) return;
-        const type = prompt('Nouveau type (AAL, Caïdat, Pashalik, Cercle, District 1, District 2, District 3...) :');
+        const type = prompt('Nouveau type (AAL, Commune, Pashalik, District) :');
         if (!type || !type.trim()) return;
-        API.modifierDivisionExterne(id, { nom: nom.trim(), type: type.trim() }).then(() => {
+        const sousType = prompt('Nouveau sous-type :');
+        const caidat = prompt('Caïdat (si Commune, laisser vide sinon) :');
+        API.modifierDivisionExterne(id, {
+            nom: nom.trim(),
+            type: type.trim(),
+            sousType: sousType || null,
+            caidatNom: caidat || null
+        }).then(() => {
             afficherSucces('Division externe modifiée');
             chargerExternes();
         }).catch(e => afficherErreur(e.message));
@@ -180,9 +249,13 @@
         catch (e) { afficherErreur(e.message); }
     }
 
-    function deconnecter() { fetch('/api/logout', {method:'POST',credentials:'include'}).then(()=>window.location.href='/login.html'); }
+    function deconnecter() { fetch('/api/logout',{method:'POST',credentials:'include'}).then(()=>window.location.href='/login.html'); }
 
-    document.addEventListener('DOMContentLoaded', () => { chargerInternes(); chargerExternes(); });
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('inputSousType').addEventListener('change', changerSousType);
+        chargerInternes();
+        chargerExternes();
+    });
     </script>
 </body>
 </html>
