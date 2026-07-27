@@ -19,8 +19,7 @@ public class SystemeExterneDAO {
             ps.setString(1, se.getNom());
             ps.setString(2, se.getUrl());
             ps.setInt(3, se.getIdDivisionExterne());
-            if (se.getIdSystemeInterneLie() == null) ps.setNull(4, Types.INTEGER);
-            else ps.setInt(4, se.getIdSystemeInterneLie());
+            ps.setNull(4, Types.INTEGER);
             ps.setString(5, se.getLogin());
             ps.setString(6, secretChiffre);
             ps.setString(7, iv);
@@ -38,8 +37,7 @@ public class SystemeExterneDAO {
             ps.setString(1, se.getNom());
             ps.setString(2, se.getUrl());
             ps.setInt(3, se.getIdDivisionExterne());
-            if (se.getIdSystemeInterneLie() == null) ps.setNull(4, Types.INTEGER);
-            else ps.setInt(4, se.getIdSystemeInterneLie());
+            ps.setNull(4, Types.INTEGER);
             ps.setString(5, se.getLogin());
             ps.setInt(6, se.getId());
             ps.executeUpdate();
@@ -110,9 +108,7 @@ public class SystemeExterneDAO {
         se.setNom(rs.getString("NomSysteme"));
         se.setUrl(rs.getString("UrlSysteme"));
         se.setIdDivisionExterne(rs.getInt("IdDivisionExterne"));
-        int idSi = rs.getInt("IdSystemeInterne");
-        se.setIdSystemeInterneLie(rs.wasNull() ? null : idSi);
-        se.setLogin(rs.getString("LoginSysteme"));
+                se.setLogin(rs.getString("LoginSysteme"));
         se.setMotPasseChiffre(rs.getString("MotPasseChiffre"));
         se.setVecteurInitialisation(rs.getString("VecteurInitialisation"));
         Timestamp ts = rs.getTimestamp("DateDernierChangement");
@@ -126,9 +122,7 @@ public class SystemeExterneDAO {
         se.setNom(rs.getString("NomSysteme"));
         se.setUrl(rs.getString("UrlSysteme"));
         se.setIdDivisionExterne(rs.getInt("IdDivisionExterne"));
-        int idSi = rs.getInt("IdSystemeInterne");
-        se.setIdSystemeInterneLie(rs.wasNull() ? null : idSi);
-        se.setLogin(rs.getString("LoginSysteme"));
+                se.setLogin(rs.getString("LoginSysteme"));
         se.setMotPasseChiffre(rs.getString("MotPasseChiffre"));
         se.setVecteurInitialisation(rs.getString("VecteurInitialisation"));
         Timestamp ts = rs.getTimestamp("DateDernierChangement");

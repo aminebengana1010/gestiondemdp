@@ -4,7 +4,7 @@ public class DivisionExterne {
     private int idDivisionExterne;
     private String nomDivision;           // BD: NomDivision (auto-généré)
     private TypeDivisionExterne type;     // BD: TypeDivision
-    private String sousType;              // BD: SousType (District 1-3, Cercle, Pashalik name)
+    private String sousType;              // BD: SousType (District 1-3 pour AAL, Cercle pour Commune, nom Pashalik, Numéro pour District)
     private String caidatNom;             // BD: CaidatNom (uniquement pour Commune)
 
     public int getIdDivisionExterne() { return idDivisionExterne; }

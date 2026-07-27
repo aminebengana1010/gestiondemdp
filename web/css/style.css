@@ -261,6 +261,12 @@ select.form-control { appearance: auto; }
     width: 400px;
     max-width: 90vw;
 }
+.login-card .login-logo {
+    display: block;
+    margin: 0 auto 16px;
+    height: 64px;
+    width: auto;
+}
 .login-card h1 {
     color: var(--primary);
     text-align: center;

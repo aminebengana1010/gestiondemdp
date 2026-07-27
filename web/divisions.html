@@ -71,14 +71,14 @@
                             <option value="District">District</option>
                         </select>
                         <select id="inputSousType" class="form-control" style="width:160px;display:none;">
-                            <option value="">-- Sous-type --</option>
+                            <option value="">-- Cercle --</option>
                         </select>
                         <input id="inputCaidat" class="form-control" placeholder="Caïdat" style="width:160px;display:none;">
                         <button class="btn btn-primary" onclick="ajouterExterne()">Ajouter</button>
                     </div>
                     <div class="table-responsive">
                         <table>
-                            <thead><tr><th>ID</th><th>Nom</th><th>Type</th><th>Sous-type</th><th>Caïdat</th><th>Actions</th></tr></thead>
+                            <thead><tr><th>ID</th><th>Nom</th><th>Type</th><th id="thSousType">Sous-type</th><th>Caïdat</th><th>Actions</th></tr></thead>
                             <tbody id="tableExternes"></tbody>
                         </table>
                     </div>
@@ -92,7 +92,6 @@
     const SOUS_TYPES = {
         AAL: ['District 1', 'District 2', 'District 3'],
         Commune: ['Abda', 'Gzoula', 'Hrara'],
-        Pashalik: ['SAFI', 'Gzoula', 'jemaa shaim'],
         District: ['District 1', 'District 2', 'District 3']
     };
 
@@ -100,8 +99,11 @@
         const type = document.getElementById('inputType').value;
         const sousTypeSel = document.getElementById('inputSousType');
         const caidatInput = document.getElementById('inputCaidat');
+        const thSousType = document.getElementById('thSousType');
 
-        sousTypeSel.innerHTML = '<option value="">-- Sous-type --</option>';
+        const label = type === 'Commune' ? 'Cercle' : type === 'District' ? 'District' : 'Sous-type';
+        thSousType.textContent = label;
+        sousTypeSel.innerHTML = '<option value="">-- ' + label + ' --</option>';
         sousTypeSel.style.display = 'none';
         caidatInput.style.display = 'none';
         caidatInput.value = '';
@@ -193,7 +195,7 @@
 
         if (!nom) { afficherErreur('Veuillez saisir un nom'); return; }
         if (!type) { afficherErreur('Veuillez choisir un type'); return; }
-        if (!sousType) { afficherErreur('Veuillez choisir un sous-type'); return; }
+        if (!sousType) { const label = type === 'Commune' ? 'cercle' : 'sous-type'; afficherErreur('Veuillez choisir le ' + label); return; }
         if (type === 'Commune' && !caidat) { afficherErreur('Veuillez saisir le caïdat'); return; }
 
         try {
@@ -224,7 +226,7 @@
         if (!nom || !nom.trim()) return;
         const type = prompt('Nouveau type (AAL, Commune, Pashalik, District) :');
         if (!type || !type.trim()) return;
-        const sousType = prompt('Nouveau sous-type :');
+        const sousType = prompt('Nouveau cercle (pour Commune) ou sous-type :');
         const caidat = prompt('Caïdat (si Commune, laisser vide sinon) :');
         API.modifierDivisionExterne(id, {
             nom: nom.trim(),

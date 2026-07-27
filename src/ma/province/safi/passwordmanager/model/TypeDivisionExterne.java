@@ -31,14 +31,14 @@ public enum TypeDivisionExterne {
     }
 
     public boolean aSousType2() {
-        return this == COMMUNE;
+        return this == COMMUNE; // Commune a des cercles
     }
 
     public List<String> sousTypes() {
         return switch (this) {
             case AAL -> List.of("District 1", "District 2", "District 3");
-            case COMMUNE -> List.of("Abda", "Gzoula", "Hrara");
-            case PASHALIK -> List.of("SAFI", "Gzoula", "jemaa shaim");
+            case COMMUNE -> List.of("Abda", "Gzoula", "Hrara"); // cercles
+            case PASHALIK -> List.of();
             case DISTRICT -> List.of("District 1", "District 2", "District 3");
         };
     }

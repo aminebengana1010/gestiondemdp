@@ -95,8 +95,6 @@ public class SystemeExterneHandler implements HttpHandler {
         se.setUrl(data.get("url"));
         se.setLogin(data.get("login"));
         se.setIdDivisionExterne(Integer.parseInt(data.getOrDefault("idDivision", "0")));
-        String idLie = data.get("idSystemeInterneLie");
-        se.setIdSystemeInterneLie(idLie != null && !idLie.isEmpty() ? Integer.parseInt(idLie) : null);
 
         service.ajouter(se, data.get("motDePasse"), session);
         ResponseUtil.json(exchange, 201, JsonUtil.buildObject(
@@ -126,8 +124,6 @@ public class SystemeExterneHandler implements HttpHandler {
             se.setUrl(data.get("url"));
             se.setLogin(data.get("login"));
             se.setIdDivisionExterne(Integer.parseInt(data.getOrDefault("idDivision", "0")));
-            String idLie = data.get("idSystemeInterneLie");
-            se.setIdSystemeInterneLie(idLie != null && !idLie.isEmpty() ? Integer.parseInt(idLie) : null);
             service.modifier(se, session);
             ResponseUtil.json(exchange, 200, "{\"succes\":true,\"message\":\"Système externe modifié\"}");
         }
@@ -167,8 +163,6 @@ public class SystemeExterneHandler implements HttpHandler {
               .append(JsonUtil.jsonString("nom", se.getNom())).append(",")
               .append(JsonUtil.jsonString("url", se.getUrl())).append(",")
               .append(JsonUtil.jsonInt("idDivision", se.getIdDivisionExterne())).append(",")
-              .append(JsonUtil.jsonString("idSystemeInterneLie",
-                  se.getIdSystemeInterneLie() != null ? se.getIdSystemeInterneLie().toString() : "null")).append(",")
               .append(JsonUtil.jsonString("login", se.getLogin())).append(",")
               .append(JsonUtil.jsonString("motDePasse", se.getMotDePasseClair() != null ? se.getMotDePasseClair() : ""))
               .append("}");

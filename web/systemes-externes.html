@@ -44,7 +44,7 @@
             <div class="card-body">
                 <div class="table-responsive">
                     <table>
-                        <thead><tr><th>Nom</th><th>URL</th><th>Division</th><th>Login</th><th>Mot de passe</th><th>Lié à</th><th>Actions</th></tr></thead>
+                        <thead><tr><th>Nom</th><th>URL</th><th>Division</th><th>Login</th><th>Mot de passe</th><th>Actions</th></tr></thead>
                         <tbody id="tableBody"></tbody>
                     </table>
                 </div>
@@ -65,7 +65,6 @@
                         <button class="btn btn-sm btn-primary" onclick="ajouterDivisionExterneDepuis('ajoutDivision')">+</button>
                     </div>
                 </div>
-                <div class="form-group"><label>Système interne lié (optionnel)</label><select id="ajoutLie" class="form-control"><option value="">- Aucun -</option></select></div>
                 <div class="form-group"><label>Login</label><input id="ajoutLogin" class="form-control"></div>
                 <div class="form-group"><label>Mot de passe</label><input id="ajoutMdp" type="password" class="form-control" required></div>
             </div>
@@ -116,13 +115,11 @@
     <script src="js/api.js"></script>
     <script>
     let divisions = [];
-    let systemesInternes = [];
 
     async function chargerDonnees() {
         try {
-            const [divRes, siRes] = await Promise.all([API.getDivisionsExternes(), API.getSystemesInternes()]);
+            const divRes = await API.getDivisionsExternes();
             divisions = divRes.data;
-            systemesInternes = siRes.data;
         } catch (e) { afficherErreur('Erreur chargement données'); }
     }
 
@@ -133,10 +130,6 @@
             sel.innerHTML = '';
             divisions.forEach(d => { sel.innerHTML += '<option value="'+d.id+'">['+d.type+'] '+d.nom+'</option>'; });
         });
-        const selLie = document.getElementById('ajoutLie');
-        selLie.innerHTML = '<option value="">- Aucun -</option>';
-        systemesInternes.forEach(s => { selLie.innerHTML += '<option value="'+s.id+'">'+s.nom+'</option>'; });
-        document.getElementById('modifLie')?.remove();
     }
 
     async function chargerListe() {
@@ -147,14 +140,12 @@
             tbody.innerHTML = '';
             res.data.forEach(s => {
                 const divName = divisions.find(d => d.id == s.idDivision)?.nom || s.idDivision;
-                const siName = systemesInternes.find(si => si.id == s.idSystemeInterneLie)?.nom || '';
                 tbody.innerHTML += '<tr>' +
                     '<td>' + s.nom + '</td>' +
                     '<td>' + (s.url||'') + '</td>' +
                     '<td>' + divName + '</td>' +
                     '<td>' + (s.login||'') + '</td>' +
                     '<td class="pwd-masked">' + (s.motDePasse||'') + '</td>' +
-                    '<td>' + siName + '</td>' +
                     '<td class="action-btns">' +
                         (window.utilisateurRole === 'Administrateur' ? '<button class="btn btn-sm btn-info" onclick="consulterSecret(' + s.id + ')">🔑 Voir</button>' : '') +
                         '<button class="btn btn-sm btn-warning" onclick="ouvrirModif(' + s.id + ')">✏️ Modifier</button>' +
@@ -172,8 +163,7 @@
                 url: document.getElementById('ajoutUrl').value,
                 idDivision: document.getElementById('ajoutDivision').value,
                 login: document.getElementById('ajoutLogin').value,
-                motDePasse: document.getElementById('ajoutMdp').value,
-                idSystemeInterneLie: document.getElementById('ajoutLie').value || null
+                motDePasse: document.getElementById('ajoutMdp').value
             });
             fermerModal('modalAjout');
             afficherSucces('Système externe ajouté');
@@ -237,8 +227,9 @@
         if (!type) return;
         const typesValides = ['AAL', 'Commune', 'Pashalik', 'District'];
         if (!typesValides.includes(type)) { afficherErreur('Type invalide'); return; }
-        const sousTypes = { AAL: 'District 1', Commune: 'Abda', Pashalik: 'SAFI', District: 'District 1' };
-        const sousType = prompt('Sous-type (' + Object.keys(sousTypes).map(k => k + ': ' + sousTypes[k]).join(', ') + ') :');
+        const sousTypes = { AAL: 'District 1', Commune: 'Abda', District: 'District 1' };
+        const label = type === 'Commune' ? 'Cercle' : type === 'District' ? 'District' : 'Sous-type';
+        const sousType = prompt(label + ' (' + Object.keys(sousTypes).map(k => k + ': ' + sousTypes[k]).join(', ') + ') :');
         if (!sousType) return;
         let caidat = null;
         if (type === 'Commune') {

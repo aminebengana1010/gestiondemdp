@@ -1,0 +1,218 @@
+╔═══════════════════════════════════════════════════════════════════════════╗
+║       MCD — Gestion des Mots de Passe (Province de Safi)               ║
+║                   Notation Merise 2                                      ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════════════════════════
+                      1. ENTITÉS (TABLES)
+═══════════════════════════════════════════════════════════════════════════
+
+┌─ ROLE ─────────────────────────────┐
+│ #IdRole                INT   PK   │
+│ *NomRole               NVARCHAR   │
+│ °Description           NVARCHAR   │
+└────────────────────────────────────┘
+
+┌─ UTILISATEUR ──────────────────────┐
+│ #IdUtilisateur         INT   PK   │
+│ *Nom                   NVARCHAR   │
+│ *Email                 NVARCHAR   │
+│ *Login                 NVARCHAR   │
+│ *MotPasseHash          NVARCHAR   │
+│ °SelMotPasse           NVARCHAR   │
+│ *EstActif              BIT        │
+│ *DateCreation          DATETIME2  │
+│ °DerniereConnexion     DATETIME2  │
+│ @IdRole                INT   FK   │
+└────────────────────────────────────┘
+
+┌─ SERVEUR ──────────────────────────┐
+│ #IdServeur             INT   PK   │
+│ *NomServeur            NVARCHAR   │
+│ *AdresseIP             VARCHAR    │
+│ *LoginServeur          NVARCHAR   │
+│ *MotPasseChiffre       NVARCHAR   │
+│ °VecteurInitialisation NVARCHAR   │
+│ *DateDernierChangement DATETIME2  │
+│ *DateCreation          DATETIME2  │
+└────────────────────────────────────┘
+
+┌─ SWITCH_RESEAU ────────────────────┐
+│ #IdSwitch              INT   PK   │
+│ *NomSwitch             NVARCHAR   │
+│ °Emplacement           NVARCHAR   │
+│ *AdresseMAC            VARCHAR    │
+│ *LoginSwitch           NVARCHAR   │
+│ *MotPasseChiffre       NVARCHAR   │
+│ °VecteurInitialisation NVARCHAR   │
+│ *DateDernierChangement DATETIME2  │
+│ *DateCreation          DATETIME2  │
+└────────────────────────────────────┘
+
+┌─ DIVISION_INTERNE ─────────────────┐
+│ #IdDivisionInterne    INT   PK   │
+│ *NomDivision          NVARCHAR   │
+│ °Service              NVARCHAR   │
+└────────────────────────────────────┘
+
+┌─ DIVISION_EXTERNE ─────────────────┐
+│ #IdDivisionExterne    INT   PK   │
+│ *NomDivision          NVARCHAR   │
+│ *TypeDivision         NVARCHAR   │
+│ °SousType             NVARCHAR   │
+│ °CaidatNom            NVARCHAR   │
+└────────────────────────────────────┘
+
+┌─ SYSTEME_INTERNE ──────────────────┐
+│ #IdSystemeInterne     INT   PK   │
+│ *NomSysteme           NVARCHAR   │
+│ *UrlSysteme           NVARCHAR   │
+│ *LoginAdmin           NVARCHAR   │
+│ *MotPasseAdminChiffre NVARCHAR   │
+│ °VecteurInitialisation NVARCHAR  │
+│ *DateDernierChangement DATETIME2 │
+│ *DateCreation         DATETIME2  │
+│ @IdDivisionInterne    INT   FK   │
+└────────────────────────────────────┘
+
+┌─ SYSTEME_EXTERNE ──────────────────┐
+│ #IdSystemeExterne     INT   PK   │
+│ *NomSysteme           NVARCHAR   │
+│ *UrlSysteme           NVARCHAR   │
+│ *LoginSysteme         NVARCHAR   │
+│ *MotPasseChiffre      NVARCHAR   │
+│ °VecteurInitialisation NVARCHAR  │
+│ *DateDernierChangement DATETIME2 │
+│ *DateCreation         DATETIME2  │
+│ @IdDivisionExterne    INT   FK   │
+│ °@IdSystemeInterne    INT   FK   │
+└────────────────────────────────────┘
+
+┌─ NOTIFICATION ─────────────────────┐
+│ #IdNotification       BIGINT PK  │
+│ *Message              NVARCHAR   │
+│ *TypeNotification     NVARCHAR   │
+│ *DateNotification     DATETIME2  │
+│ *Lu                   BIT        │
+│ °DateLecture          DATETIME2  │
+│ @IdUtilisateur        INT   FK   │
+└────────────────────────────────────┘
+
+┌─ LOG_AUDIT ────────────────────────┐
+│ #IdLog                BIGINT PK  │
+│ *Action               NVARCHAR   │
+│ *Entite               NVARCHAR   │
+│ °IdCible              INT        │
+│ °Cible                NVARCHAR   │
+│ °Details              NVARCHAR   │
+│ °AdresseIP            VARCHAR    │
+│ *DateAction           DATETIME2  │
+│ @IdUtilisateur        INT   FK   │
+└────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════
+                2. ASSOCIATIONS (RELATIONS)
+═══════════════════════════════════════════════════════════════════════════
+
+  ROLE ──────< possède >────── UTILISATEUR
+    (0,N)                      (1,1)
+    Un rôle peut être attribué à plusieurs utilisateurs.
+    Un utilisateur possède un et un seul rôle.
+
+  UTILISATEUR ──< reçoit >──── NOTIFICATION
+    (0,N)                      (1,1)
+    Un utilisateur peut recevoir plusieurs notifications.
+    Une notification appartient à un seul utilisateur.
+
+  UTILISATEUR ──< génère >──── LOG_AUDIT
+    (0,N)                      (1,1)
+    Un utilisateur peut générer plusieurs traces d'audit.
+    Une trace d'audit est générée par un seul utilisateur.
+
+  DIVISION_INTERNE ──< regroupe >──── SYSTEME_INTERNE
+    (0,N)                             (1,1)
+    Une division interne peut regrouper plusieurs systèmes internes.
+    Un système interne appartient à une seule division interne.
+
+  DIVISION_EXTERNE ──< regroupe >──── SYSTEME_EXTERNE
+    (0,N)                             (1,1)
+    Une division externe peut regrouper plusieurs systèmes externes.
+    Un système externe appartient à une seule division externe.
+
+  SYSTEME_INTERNE ──< lié_à >──── SYSTEME_EXTERNE
+    (0,1)                            (0,N)
+    Un système interne peut être lié à plusieurs systèmes externes.
+    Un système externe peut être lié à zéro ou un système interne.
+
+
+═══════════════════════════════════════════════════════════════════════════
+              3. HÉRITAGE (Merise 2 — exclusif / total)
+═══════════════════════════════════════════════════════════════════════════
+
+        ┌──────────────────────────────────────────────────┐
+        │           COMPTE_TECHNIQUE (entité mère)         │
+        │  id, nom, login, motPasseChiffre, iv, dateChgt  │
+        └──────────────┬──────────────┬────────────────────┘
+                       │              │
+                       ↓              ↓
+              ┌────────────┐  ┌─────────────────────┐
+              │  SERVEUR   │  │ SYSTEME (abstrait)  │
+              │ +adresseIP │  │ +url                │
+              └────────────┘  └──────────┬──────────┘
+                                         │
+                          ┌──────────────┴──────────────┐
+                          ↓                              ↓
+              ┌──────────────────────┐  ┌──────────────────────┐
+              │   SYSTEME_INTERNE    │  │   SYSTEME_EXTERNE    │
+              │ +idDivisionInterne   │  │ +idDivisionExterne   │
+              └──────────────────────┘  │ +idSystemeInterneLie │
+                                        └──────────────────────┘
+
+              ┌────────────────────────────┐
+              │       SWITCH_RESEAU        │
+              │ +adresseMAC, +emplacement  │
+              └────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════
+              4. CONTRAINTES SPÉCIFIQUES
+═══════════════════════════════════════════════════════════════════════════
+
+  DIVISION_EXTERNE :
+    • TypeDivision ∈ {AAL, Commune, Pashalik, District}
+    • SousType dépend de TypeDivision :
+        AAL      → District 1 | District 2 | District 3
+        Commune  → Abda | Gzoula | Hrara (+ CaidatNom obligatoire)
+        Pashalik → SAFI | Gzoula | jemaa shaim
+        District → District 1 | District 2 | District 3
+    • NomDivision UNIQUE
+
+  NOTIFICATION :
+    • TypeNotification ∈ {INFORMATION, CHANGEMENT_MDP, ALERTE_ROTATION, AJOUT_COMPTE}
+
+  LOG_AUDIT :
+    • Action ∈ {CONSULTATION, AJOUT, MODIFICATION, SUPPRESSION, EXPORT, CONNEXION, DECONNEXION}
+
+  SÉCURITÉ :
+    • MotPasseHash = PBKDF2 (jamais réversible)
+    • MotPasseChiffre = AES (clé en mémoire, jamais en BD)
+    • Pas de CASCADE DELETE — suppression contrôlée par l'application
+
+
+═══════════════════════════════════════════════════════════════════════════
+              5. DICTIONNAIRE DE DONNÉES
+═══════════════════════════════════════════════════════════════════════════
+
+  Entité              | Volume     | Croissance  | Sensibilité
+  ────────────────────┼────────────┼─────────────┼──────────────────
+  Role                | ~3         | Stable      | —
+  Utilisateur         | 5-20       | Faible      | Mots de passe hashés
+  Serveur             | 10-50      | Faible      | Secrets chiffrés AES
+  SwitchReseau        | 10-30      | Faible      | Secrets chiffrés AES
+  DivisionInterne     | 5-15       | Faible      | —
+  DivisionExterne     | 20-100     | Faible      | —
+  SystemeInterne      | 20-100     | Faible      | Secrets chiffrés AES
+  SystemeExterne      | 30-150     | Faible      | Secrets chiffrés AES
+  Notification        | 100-10k    | Modérée     | —
+  LogAudit            | 1k-100k    | Élevée      | IP, actions
