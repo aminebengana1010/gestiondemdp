@@ -14,6 +14,41 @@ public final class DatabaseInitializer {
 
     private DatabaseInitializer() {}
 
+    public static boolean creerBaseSiAbsente() {
+        String sqlPath = System.getenv().getOrDefault("SQL_PATH", SQL_PATH);
+        try {
+            if (!Files.exists(Paths.get(sqlPath))) {
+                System.err.println("[DB] Fichier SQL introuvable: " + sqlPath);
+                return false;
+            }
+            String sql = Files.readString(Paths.get(sqlPath))
+                              .replaceAll("(?is)\\s*GO\\s*", ";\n");
+            java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("(?is)CREATE\\s+DATABASE\\s+[^;]+;")
+                .matcher(sql);
+            if (!m.find()) return false;
+            String stmt = m.group().trim();
+
+            // Connexion à la base "master" pour créer la base métier
+            String[] urlParts = DatabaseConnection.getUrl().split("//")[1].split(":");
+            String hote = urlParts[0];
+            String port = urlParts[1].split(";")[0];
+            String master = "jdbc:sqlserver://" + hote + ":" + port
+                    + ";databaseName=master;encrypt=true;trustServerCertificate=true;";
+            try (Connection cn = java.sql.DriverManager.getConnection(master,
+                    System.getenv().getOrDefault("DB_USER", "sa"),
+                    System.getenv().getOrDefault("DB_PASSWORD", "sa"));
+                 Statement st = cn.createStatement()) {
+                st.execute(stmt);
+                System.out.println("[DB] Base créée: " + stmt);
+                return true;
+            }
+        } catch (Exception e) {
+            System.err.println("[DB] Échec création base: " + e.getMessage());
+            return false;
+        }
+    }
+
     public static void initialiser() throws IOException, SQLException {
         try (Connection cn = DatabaseConnection.getConnection()) {
             // Vérifier si la base est déjà initialisée

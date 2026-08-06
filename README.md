@@ -1788,6 +1788,39 @@ build.bat
 - Login : `admin`
 - Mot de passe : `admin123`
 
+### Déploiement Docker / النشر عبر Docker
+
+L'application est fournie avec une stack Docker complète (`Dockerfile`, `docker-compose.yml`) : application Java + SQL Server 2022 dans des conteneurs séparés, volume pour la persistance de la clé AES et des données.
+
+**Prérequis / المتطلبات** : Docker + plugin Docker Compose.
+
+**Étapes / الخطوات**
+
+```bash
+# 1. Personnaliser le mot de passe SQL Server (obligatoire pour la prod)
+cp .env.example .env
+#    éditez .env → changez DB_PASSWORD
+
+# 2. Lancer la stack (build + démarrage SQL Server puis application)
+docker compose up -d --build
+```
+
+- L'application attend que SQL Server soit **healthy** avant de démarrer (`depends_on: condition: service_healthy`).
+- Le premier démarrage crée la base `GestionMotsDePasse_safi` automatiquement (`DB_CREATE=true`), applique le schéma `sql/gestion_mots_de_passe.sql`, puis crée l'admin `admin / admin123`.
+- La clé AES est persistée dans le volume `app-data` (`/app/data/.aes_key`) : **ne supprimez jamais ce volume**, sinon les secrets chiffrés deviendraient illisibles.
+- Accès : http://localhost:8080
+
+**Commandes utiles / أوامر مفيدة**
+```bash
+docker compose ps            # état des conteneurs
+docker compose logs -f app   # logs applicatifs
+docker compose logs -f db    # logs SQL Server
+docker compose down          # arrêt (données conservées)
+docker compose down -v       # arrêt + suppression des volumes (perte des données !)
+```
+
+**Déploiement VPS** : `deploy/setup-vps.sh` automatise l'installation de Docker, le clonage et le démarrage sur un serveur Ubuntu frais. Le workflow GitHub `.github/workflows/deploy.yml` déploie automatiquement sur `main` via SSH.
+
 ---
 
 ## 6. Sécurité / الأمان

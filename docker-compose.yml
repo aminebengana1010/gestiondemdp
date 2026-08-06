@@ -1,0 +1,53 @@
+# ============================================================
+# Gestion des Mots de Passe - Province de Safi
+# Stack : application Java + SQL Server
+# ============================================================
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-CU18-ubuntu-22.04
+    container_name: gestiondemdp-db
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${DB_PASSWORD:-VotreMdpS3curise!2026}"
+      MSSQL_PID: "Developer"
+      MSSQL_TCP_PORT: "1433"
+      TZ: "Africa/Casablanca"
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"${DB_PASSWORD:-VotreMdpS3curise!2026}\" -C -Q 'SELECT 1' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    restart: unless-stopped
+
+  app:
+    build: .
+    container_name: gestiondemdp-app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: "8080"
+      DB_HOST: db
+      DB_PORT: "1433"
+      DB_NAME: "${DB_NAME:-GestionMotsDePasse_safi}"
+      DB_USER: "sa"
+      DB_PASSWORD: "${DB_PASSWORD:-VotreMdpS3curise!2026}"
+      DB_CREATE: "true"
+      WEB_DIR: /app/web
+      SQL_PATH: /app/sql/gestion_mots_de_passe.sql
+      AES_KEY_PATH: /app/data/.aes_key
+    ports:
+      - "8080:8080"
+    volumes:
+      - app-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  mssql-data:
+  app-data:

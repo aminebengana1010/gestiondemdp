@@ -30,9 +30,22 @@ public class Main {
         // === 1. Vérification connexion BD ===
         System.out.println("[INFO] Test de connexion à SQL Server...");
         if (!DatabaseConnection.testConnection()) {
-            System.err.println("[ERREUR] Impossible de se connecter à SQL Server. Vérifiez que le serveur est démarré.");
-            System.err.println("[ERREUR] URL: jdbc:sqlserver://localhost:1433;databaseName=GestionMotsDePasse_safi");
-            System.exit(1);
+            // Tentative de création automatique de la base (utile en Docker)
+            String creerBase = System.getenv("DB_CREATE");
+            if (creerBase != null && creerBase.equalsIgnoreCase("true")) {
+                System.out.println("[INFO] Connexion impossible — tentative de création de la base...");
+                boolean cree = DatabaseInitializer.creerBaseSiAbsente();
+                if (cree && DatabaseConnection.testConnection()) {
+                    System.out.println("[INFO] Base créée, connexion réussie.");
+                } else {
+                    System.err.println("[ERREUR] Création de la base impossible ou connexion toujours échouée.");
+                    System.exit(1);
+                }
+            } else {
+                System.err.println("[ERREUR] Impossible de se connecter à SQL Server. Vérifiez que le serveur est démarré.");
+                System.err.println("[ERREUR] URL: " + DatabaseConnection.getUrl());
+                System.exit(1);
+            }
         }
         System.out.println("[INFO] Connexion SQL Server réussie.");
 
@@ -64,7 +77,7 @@ public class Main {
         SecurityInterceptor security = new SecurityInterceptor(sessionManager);
 
         // Générer ou charger la clé AES (persistée dans un fichier pour survie au redémarrage)
-        java.nio.file.Path clePath = java.nio.file.Paths.get(".aes_key");
+        java.nio.file.Path clePath = java.nio.file.Paths.get(envOuDefaut("AES_KEY_PATH", ".aes_key"));
         SecretKey aesKey;
         if (java.nio.file.Files.exists(clePath)) {
             byte[] encoded = java.nio.file.Files.readAllBytes(clePath);
@@ -93,15 +106,16 @@ public class Main {
         authService.creerPremierAdministrateur();
 
         // === 4. Démarrer le serveur HTTP ===
+        int port = Integer.parseInt(envOuDefaut("PORT", "8080"));
         HttpServer server;
         try {
-            server = HttpServer.create(new InetSocketAddress(8080), 0);
+            server = HttpServer.create(new InetSocketAddress(port), 0);
         } catch (java.net.BindException e) {
             return;
         }
 
         // Fichiers statiques (servis depuis le répertoire web/)
-        StaticFileHandler staticHandler = new StaticFileHandler("web");
+        StaticFileHandler staticHandler = new StaticFileHandler(envOuDefaut("WEB_DIR", "web"));
         server.createContext("/", staticHandler);
         server.createContext("/index.html", staticHandler);
         server.createContext("/login.html", staticHandler);
@@ -133,6 +147,11 @@ public class Main {
 
         server.setExecutor(Executors.newFixedThreadPool(10));
         server.start();
+    }
+
+    private static String envOuDefaut(String nom, String defaut) {
+        String valeur = System.getenv(nom);
+        return (valeur == null || valeur.isBlank()) ? defaut : valeur.trim();
     }
 
 }
